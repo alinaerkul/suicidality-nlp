@@ -1,20 +1,16 @@
-# Data files (too large for GitHub)
+# Data files
 data/raw/*.csv
-data/raw/*.zip
 data/processed/*.csv
 
-# Trained models (too large for GitHub)
+# Trained models
 results/models/*.pt
 results/models/*.pkl
-results/models/*.bin
 
 # Python
 __pycache__/
-*.py[cod]
-*.egg-info/
+*.pyc
 .env
 venv/
-.venv/
 
 # Jupyter
 .ipynb_checkpoints/
