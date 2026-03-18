@@ -21,6 +21,7 @@ from src.dataset_loader import load_twitter, load_reddit_binary, load_cssrs, app
 from src.preprocessing import preprocess_dataframe
 from src.models_ml import get_all_models, train_model, predict, predict_proba
 from src.evaluation import evaluate, print_report, save_results
+from src.models_dl import run_dl_experiment
 
 '''Что такое argparse? Это библиотека которая позволяет 
 передавать аргументы в скрипт через командную строку. 
@@ -131,30 +132,68 @@ def run_experiment(dataset_name, model_name):
 
 # ── Main ───────────────────────────────────────────────────────────────────
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Train ML models for suicidality detection')
+    parser = argparse.ArgumentParser(
+        description='Train models for suicidality detection')
     parser.add_argument('--dataset', type=str, required=True,
-                        choices=['twitter', 'reddit', 'cssrs'],
-                        help='Dataset to use')
+                        choices=['twitter', 'reddit', 'cssrs'])
     parser.add_argument('--model', type=str, default='all',
-                        choices=['logistic_regression', 'svm', 'random_forest', 'all'],
-                        help='Model to train (default: all)')
+                        choices=['logistic_regression', 'svm', 'random_forest',
+                                 'lstm', 'bilstm', 'gru', 'all_ml', 'all_dl', 'all'])
+    parser.add_argument('--epochs', type=int, default=5)
     args = parser.parse_args()
 
-    if args.model == 'all':
-        # Run all three models on the chosen dataset
-        all_results = []
-        for model_name in ['logistic_regression', 'svm', 'random_forest']:
+    ml_models = ['logistic_regression', 'svm', 'random_forest']
+    dl_models = ['lstm', 'bilstm', 'gru']
+
+    # Determine which models to run
+    if args.model == 'all_ml':
+        models_to_run = ml_models
+    elif args.model == 'all_dl':
+        models_to_run = dl_models
+    elif args.model == 'all':
+        models_to_run = ml_models + dl_models
+    else:
+        models_to_run = [args.model]
+
+    all_results = []
+
+    for model_name in models_to_run:
+        if model_name in ml_models:
             result = run_experiment(args.dataset, model_name)
             all_results.append(result)
 
-        # Print summary table
+        elif model_name in dl_models:
+            # Load data for DL
+            X, y = load_data(args.dataset)
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=0.2, stratify=y, random_state=42
+            )
+            print(f'\n{"="*60}')
+            print(f'EXPERIMENT: {args.dataset} + {model_name}')
+            print('='*60)
+
+            y_true, y_pred = run_dl_experiment(
+                model_name, X_train, X_test,
+                y_train, y_test,
+                dataset_name=args.dataset,
+                epochs=args.epochs
+            )
+
+            # Evaluate
+            from src.evaluation import evaluate, print_report, save_results
+            print_report(y_true, y_pred, args.dataset, model_name)
+            result = evaluate(y_true, y_pred,
+                            dataset_name=args.dataset,
+                            model_name=model_name)
+            save_results(result)
+            all_results.append(result)
+
+    # Print summary
+    if len(all_results) > 1:
         print(f'\n{"="*60}')
         print('SUMMARY')
         print('='*60)
-        print(f'{"Model":<25} {"Accuracy":>10} {"F1":>10} {"ROC-AUC":>10}')
-        print('-'*60)
+        print(f'{"Model":<25} {"Accuracy":>10} {"F1":>10}')
+        print('-'*50)
         for r in all_results:
-            roc = str(r['roc_auc']) if r['roc_auc'] else 'N/A'
-            print(f'{r["model"]:<25} {r["accuracy"]:>10} {r["f1"]:>10} {roc:>10}')
-    else:
-        run_experiment(args.dataset, args.model)
+            print(f'{r["model"]:<25} {r["accuracy"]:>10} {r["f1"]:>10}')

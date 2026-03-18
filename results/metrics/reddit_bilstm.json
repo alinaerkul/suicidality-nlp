@@ -1,0 +1,10 @@
+{
+    "dataset": "reddit",
+    "model": "bilstm",
+    "accuracy": 0.9425,
+    "precision": 0.9427,
+    "recall": 0.9425,
+    "f1": 0.9425,
+    "f1_macro": 0.9425,
+    "roc_auc": null
+}
