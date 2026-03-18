@@ -81,7 +81,7 @@ The central research question is: *How do classical ML, deep learning, and trans
 ```
 suicidality-nlp/
 ├── data/
-│   ├── raw/            ← place CSV files here (not tracked by Git)
+│   ├── raw/            ← CSV files
 │   └── processed/      ← cleaned and split datasets
 ├── src/
 │   ├── dataset_loader.py      ← load all datasets into unified format
@@ -171,4 +171,4 @@ All experiments use fixed random seed (`random_state=42`) and stratified 80/20 t
 
 ---
 
-*This project is part of a Master's thesis in Data Science at ELTE (Eötvös Loránd University), Budapest.*
+*This project is part of the DS LAB II in Data Science at ELTE (Eötvös Loránd University), Budapest.*
