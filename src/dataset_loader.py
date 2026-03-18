@@ -58,6 +58,7 @@ def load_twitter(filepath: str) -> pd.DataFrame:
 
     # Rename columns to our unified format
     df = df.rename(columns={"Tweet": "text", "Suicide": "label"})
+    df["label"] = df["label"].str.strip()
 
     # Drop rows where text is missing (there are 2 in this dataset)
     df = df.dropna(subset=["text"]).reset_index(drop=True)

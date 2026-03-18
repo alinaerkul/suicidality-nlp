@@ -1,0 +1,10 @@
+{
+    "dataset": "reddit",
+    "model": "svm",
+    "accuracy": 0.9396,
+    "precision": 0.9396,
+    "recall": 0.9396,
+    "f1": 0.9396,
+    "f1_macro": 0.9396,
+    "roc_auc": null
+}

@@ -1,0 +1,10 @@
+{
+    "dataset": "twitter",
+    "model": "svm",
+    "accuracy": 0.9216,
+    "precision": 0.9234,
+    "recall": 0.9216,
+    "f1": 0.922,
+    "f1_macro": 0.9169,
+    "roc_auc": null
+}

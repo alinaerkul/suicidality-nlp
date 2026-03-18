@@ -1,0 +1,10 @@
+{
+    "dataset": "reddit",
+    "model": "random_forest",
+    "accuracy": 0.9082,
+    "precision": 0.9087,
+    "recall": 0.9082,
+    "f1": 0.9082,
+    "f1_macro": 0.9082,
+    "roc_auc": 0.968
+}
