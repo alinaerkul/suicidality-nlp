@@ -2,8 +2,9 @@
 
 **Author:** Alina Erkulova  
 **Institution:** ELTE (Eötvös Loránd University), Budapest  
+**Programme:** MSc Data Science  
 **GitHub:** [alinaerkul/suicidality-nlp](https://github.com/alinaerkul/suicidality-nlp)  
-**Status:** 🟡 In progress — EDA complete, modelling in progress
+**Status:** 🟡 In progress — Classical ML complete, Deep Learning next
 
 ---
 
@@ -39,18 +40,38 @@ The central research question is: *How do classical ML, deep learning, and trans
 
 ---
 
+## Results — Classical ML (Binary Classification)
+
+### F1 Score (weighted)
+
+| Model | Twitter | Reddit | C-SSRS |
+|-------|---------|--------|--------|
+| Logistic Regression | 0.8976 | **0.9414** | 0.4379 |
+| Linear SVM | 0.9220 | 0.9396 | **0.6686** |
+| Random Forest | **0.9405** | 0.9082 | 0.6431 |
+
+### Key Findings
+
+- **No single model wins across all datasets** — model performance depends heavily on dataset characteristics
+- **Twitter and Reddit are much easier than C-SSRS** — best F1 of 0.94 vs 0.67
+- **Logistic Regression surprisingly strong** on large balanced Reddit dataset
+- **SVM most consistent** — best or close to best on all three datasets
+- **C-SSRS is the hardest** — only 500 samples, class imbalance, long texts cause all models to struggle
+
+---
+
 ## Model Families
 
-**Classical ML** (TF-IDF features)
+**Classical ML** (TF-IDF features) ✅ Complete
 - Logistic Regression
 - Linear SVM
 - Random Forest
 
-**Deep Learning**
+**Deep Learning** 🔄 In progress
 - LSTM
 - BiLSTM
 
-**Transformers**
+**Transformers** ⏳ Planned
 - BERT (`bert-base-uncased`)
 
 ---
@@ -67,17 +88,18 @@ suicidality-nlp/
 │   ├── preprocessing.py       ← text cleaning (ML mode and BERT mode)
 │   ├── label_mapping.py       ← encode labels as integers
 │   ├── models_ml.py           ← Logistic Regression, SVM, Random Forest
-│   ├── models_dl.py           ← LSTM, BiLSTM
-│   ├── models_transformer.py  ← BERT fine-tuning
+│   ├── models_dl.py           ← LSTM, BiLSTM (in progress)
+│   ├── models_transformer.py  ← BERT fine-tuning (planned)
 │   └── evaluation.py          ← metrics, confusion matrix, result tables
 ├── scripts/
 │   └── train.py               ← unified training script
 ├── notebooks/
 │   ├── 01_eda.ipynb           ← exploratory data analysis
-│   └── EDA_summary.md         ← written summary of EDA findings
+│   ├── EDA_summary.md         ← written summary of EDA findings
+│   └── 02_ml_results.ipynb    ← classical ML results and visualisations
 ├── results/
-│   ├── metrics/               ← JSON/CSV result files
-│   └── plots/                 ← confusion matrices, charts, word clouds
+│   ├── metrics/               ← JSON result files (one per experiment)
+│   └── plots/                 ← charts and word clouds
 ├── requirements.txt
 ├── .gitignore
 └── README.md
@@ -91,11 +113,13 @@ suicidality-nlp/
 - [x] Dataset loaders (`dataset_loader.py`)
 - [x] Text preprocessing (`preprocessing.py`)
 - [x] Label mapping (`label_mapping.py`)
-- [x] Exploratory Data Analysis (EDA) — all three datasets
-- [ ] Classical ML models (Logistic Regression, SVM, Random Forest)
+- [x] Exploratory Data Analysis — all three datasets
+- [x] Classical ML models (Logistic Regression, SVM, Random Forest)
+- [x] Evaluation framework (`evaluation.py`)
+- [x] ML results visualisation and analysis
 - [ ] Deep Learning models (LSTM, BiLSTM)
 - [ ] BERT fine-tuning
-- [ ] Results tables and cross-dataset comparison
+- [ ] Cross-model results comparison
 - [ ] Final report (Overleaf)
 
 ---
@@ -115,35 +139,36 @@ pip install -r requirements.txt
 #    - Suicide_Detection.csv
 #    - 500_Reddit_users_posts_labels.csv
 
-# 4. Run EDA notebook
+# 4. Run EDA
 jupyter notebook notebooks/01_eda.ipynb
+
+# 5. Train classical ML models
+python scripts/train.py --dataset twitter --model all
+python scripts/train.py --dataset reddit  --model all
+python scripts/train.py --dataset cssrs   --model all
 ```
 
 ---
 
 ## Evaluation Protocol
 
-Every experiment saves the following metrics:
+Every experiment saves:
 - Accuracy, Precision, Recall, F1-score (macro and weighted)
-- ROC-AUC (binary tasks)
-- Confusion matrix
+- ROC-AUC (binary tasks, where available)
 - Full classification report per class
 
-All experiments use:
-- Fixed random seed (`random_state=42`)
-- Stratified train/test split (80/20)
-- Same evaluation code across all models and datasets
+All experiments use fixed random seed (`random_state=42`) and stratified 80/20 train/test split.
 
 ---
 
 ## Key EDA Findings
 
-1. **Text length varies dramatically** — Twitter median is 85 chars vs C-SSRS median of 3,400 chars (40x difference)
+1. **Text length varies dramatically** — Twitter median 85 chars vs C-SSRS median 3,400 chars (40x difference)
 2. **Reddit Binary is perfectly balanced** — 50/50 split across 232k posts
-3. **C-SSRS Attempt class has only 45 examples** — severe class imbalance, key challenge for multi-class models
+3. **C-SSRS Attempt class has only 45 examples** — severe class imbalance
 4. **Cross-domain gap** — Twitter (informal, short) vs Reddit (formal, long) is a central research variable
 5. **Data quality issue found** — trailing whitespace in Twitter labels, corrected before analysis
 
 ---
 
-*This project is part of a Master's DS LAB II in Data Science at ELTE (Eötvös Loránd University), Budapest.*
+*This project is part of a Master's thesis in Data Science at ELTE (Eötvös Loránd University), Budapest.*
