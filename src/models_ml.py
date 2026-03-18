@@ -35,7 +35,8 @@ def get_logistic_regression():
         ('clf', LogisticRegression(
             C=1.0,
             max_iter=1000,
-            random_state=42
+            random_state=42,
+            class_weight='balanced'
         ))
     ])
 
@@ -58,7 +59,8 @@ def get_svm():
         ('clf', LinearSVC(
             C=1.0,
             max_iter=2000,
-            random_state=42
+            random_state=42,
+            class_weight='balanced'
         ))
     ])
 
@@ -81,7 +83,8 @@ def get_random_forest():
         ('clf', RandomForestClassifier(
             n_estimators=200,
             random_state=42,
-            n_jobs=-1
+            n_jobs=-1,
+            class_weight='balanced'
         ))
     ])
 

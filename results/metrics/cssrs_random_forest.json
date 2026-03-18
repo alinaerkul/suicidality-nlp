@@ -2,9 +2,9 @@
     "dataset": "cssrs",
     "model": "random_forest",
     "accuracy": 0.67,
-    "precision": 0.6729,
+    "precision": 0.6693,
     "recall": 0.67,
-    "f1": 0.6431,
-    "f1_macro": 0.6177,
-    "roc_auc": 0.7288
+    "f1": 0.6476,
+    "f1_macro": 0.6239,
+    "roc_auc": 0.727
 }

@@ -1,10 +1,10 @@
 {
     "dataset": "twitter",
     "model": "random_forest",
-    "accuracy": 0.9412,
-    "precision": 0.9426,
-    "recall": 0.9412,
-    "f1": 0.9405,
-    "f1_macro": 0.9355,
-    "roc_auc": 0.9773
+    "accuracy": 0.9356,
+    "precision": 0.9363,
+    "recall": 0.9356,
+    "f1": 0.9349,
+    "f1_macro": 0.9296,
+    "roc_auc": 0.9784
 }
