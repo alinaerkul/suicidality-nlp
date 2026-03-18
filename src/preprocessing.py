@@ -7,7 +7,7 @@ Two modes are supported:
     - "ml"   : aggressive cleaning for TF-IDF + classical ML models
     - "bert" : light cleaning for BERT (keeps more original structure)
 
-Author: (your name)
+Author: (Alina Erkulova)
 """
 
 import re

@@ -7,7 +7,7 @@ Why do we need this?
     Models don't understand strings like "suicide" or "Ideation".
     They need numbers. This file handles all conversions consistently.
 
-Author: (your name)
+Author: (Alina Erkulova)
 """
 
 import pandas as pd

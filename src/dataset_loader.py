@@ -11,7 +11,7 @@ Optionally adds:
     - binary_label : 0 or 1  (added by apply_binary_mapping())
     - dataset_name : string identifier for the source dataset
 
-Author: (your name)
+Author: (Alina Erkulova)
 """
 
 import pandas as pd
