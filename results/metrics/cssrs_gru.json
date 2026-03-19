@@ -1,0 +1,10 @@
+{
+    "dataset": "cssrs",
+    "model": "gru",
+    "accuracy": 0.58,
+    "precision": 0.6401,
+    "recall": 0.58,
+    "f1": 0.5739,
+    "f1_macro": 0.5785,
+    "roc_auc": null
+}
