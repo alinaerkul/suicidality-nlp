@@ -124,7 +124,7 @@ class LSTMClassifier(nn.Module):
         self.lstm = nn.LSTM(
             embed_dim, hidden_dim,
             num_layers=num_layers,
-            dropout=dropout,
+            dropout=dropout if num_layers > 1 else 0.0,
             batch_first=True
         )
         self.dropout = nn.Dropout(dropout)
@@ -158,7 +158,7 @@ class BiLSTMClassifier(nn.Module):
         self.lstm = nn.LSTM(
             embed_dim, hidden_dim,
             num_layers=num_layers,
-            dropout=dropout,
+            dropout=dropout if num_layers > 1 else 0.0,
             batch_first=True,
             bidirectional=True   # ← единственное отличие от LSTM!
         )
@@ -191,7 +191,7 @@ class GRUClassifier(nn.Module):
         self.gru = nn.GRU(
             embed_dim, hidden_dim,
             num_layers=num_layers,
-            dropout=dropout,
+            dropout=dropout if num_layers > 1 else 0.0,
             batch_first=True
         )
         self.dropout = nn.Dropout(dropout)
@@ -301,19 +301,19 @@ def run_dl_experiment(model_name, X_train, X_test, y_train, y_test,
                                embed_dim=64,
                                hidden_dim=64,
                                num_layers=1,
-                               dropout=0.0).to(device)
+                               dropout=0.3).to(device)
     elif model_name == 'bilstm':
         model = BiLSTMClassifier(vocab_size,
                                  embed_dim=64,
                                  hidden_dim=64,
                                  num_layers=1,
-                                 dropout=0.5).to(device)
+                                 dropout=0.3).to(device)
     elif model_name == 'gru':
         model = GRUClassifier(vocab_size,
                               embed_dim=64,
                               hidden_dim=64,
                               num_layers=1,
-                              dropout=0.5).to(device)
+                              dropout=0.3).to(device)
     else:
         raise ValueError(f'Unknown model: {model_name}')
 

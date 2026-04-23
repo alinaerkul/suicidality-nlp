@@ -17,11 +17,12 @@ import argparse
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from src.dataset_loader import load_twitter, load_reddit_binary, load_cssrs, apply_binary_mapping
+from src.dataset_loader import load_twitter, load_reddit_binary, load_cssrs, load_russian_vk, apply_binary_mapping
 from src.preprocessing import preprocess_dataframe
 from src.models_ml import get_all_models, train_model, predict, predict_proba
 from src.evaluation import evaluate, print_report, save_results
 from src.models_dl import run_dl_experiment
+from src.models_transformer import run_bert_experiment
 
 '''Что такое argparse? Это библиотека которая позволяет 
 передавать аргументы в скрипт через командную строку. 
@@ -30,15 +31,20 @@ from src.models_dl import run_dl_experiment
 
 # ── Data paths ─────────────────────────────────────────────────────────────
 DATA_PATHS = {
-    'twitter': 'data/raw/Suicide_Ideation_DatasetTwitterbased.csv',
-    'reddit':  'data/raw/Suicide_Detection.csv',
-    'cssrs':   'data/raw/500_Reddit_users_posts_labels.csv',
+    'twitter':    'data/raw/Suicide_Ideation_DatasetTwitterbased.csv',
+    'reddit':     'data/raw/Suicide_Detection.csv',
+    'cssrs':      'data/raw/500_Reddit_users_posts_labels.csv',
+    'russian_vk': 'data/raw/Depressive data.xlsx',
 }
 
 
-def load_data(dataset_name):
+def load_data(dataset_name, mode='ml'):
     """
     Load and prepare a dataset for training.
+
+    mode='ml'   — aggressive cleaning for TF-IDF (ML and DL models)
+    mode='bert' — light cleaning (keep punctuation and casing for BERT)
+
     Возвращает тексты (X) и метки (y).
     """
     if dataset_name == 'twitter':
@@ -59,13 +65,18 @@ def load_data(dataset_name):
         X = df['text']
         y = df['binary_label']
 
+    elif dataset_name == 'russian_vk':
+        df = load_russian_vk(DATA_PATHS['russian_vk'])
+        # binary_label already set by loader (0/1)
+        X = df['text']
+        y = df['binary_label']
+
     else:
         raise ValueError(f"Unknown dataset: '{dataset_name}'.")
 
-    # Apply ML preprocessing — clean text for TF-IDF
-    # preprocess_dataframe добавляет колонку 'text_clean'
+    language = 'russian' if dataset_name == 'russian_vk' else 'english'
     df_clean = preprocess_dataframe(
-        pd.DataFrame({'text': X}), text_col='text', mode='ml'
+        pd.DataFrame({'text': X}), text_col='text', mode=mode, language=language
     )
     X_clean = df_clean['text_clean']
 
@@ -135,15 +146,22 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Train models for suicidality detection')
     parser.add_argument('--dataset', type=str, required=True,
-                        choices=['twitter', 'reddit', 'cssrs'])
+                        choices=['twitter', 'reddit', 'cssrs', 'russian_vk'])
     parser.add_argument('--model', type=str, default='all',
                         choices=['logistic_regression', 'svm', 'random_forest',
-                                 'lstm', 'bilstm', 'gru', 'all_ml', 'all_dl', 'all'])
+                                 'lstm', 'bilstm', 'gru',
+                                 'bert', 'mbert', 'xlmr',
+                                 'all_ml', 'all_dl', 'all'])
     parser.add_argument('--epochs', type=int, default=5)
+    parser.add_argument('--bert_epochs', type=int, default=3)
+    parser.add_argument('--batch_size', type=int, default=16)
+    parser.add_argument('--max_samples', type=int, default=None,
+                        help='Limit dataset size (useful for Reddit on CPU)')
     args = parser.parse_args()
 
-    ml_models = ['logistic_regression', 'svm', 'random_forest']
-    dl_models = ['lstm', 'bilstm', 'gru']
+    ml_models   = ['logistic_regression', 'svm', 'random_forest']
+    dl_models   = ['lstm', 'bilstm', 'gru']
+    bert_models = ['bert', 'mbert', 'xlmr']
 
     # Determine which models to run
     if args.model == 'all_ml':
@@ -151,7 +169,7 @@ if __name__ == '__main__':
     elif args.model == 'all_dl':
         models_to_run = dl_models
     elif args.model == 'all':
-        models_to_run = ml_models + dl_models
+        models_to_run = ml_models + dl_models + bert_models
     else:
         models_to_run = [args.model]
 
@@ -172,11 +190,16 @@ if __name__ == '__main__':
             print(f'EXPERIMENT: {args.dataset} + {model_name}')
             print('='*60)
 
+            # Tweets are short (~15 words); C-SSRS posts are long (~600 words)
+            dataset_max_len = {'twitter': 64, 'reddit': 128, 'cssrs': 256}
+            max_len = dataset_max_len.get(args.dataset, 128)
+
             y_true, y_pred = run_dl_experiment(
                 model_name, X_train, X_test,
                 y_train, y_test,
                 dataset_name=args.dataset,
-                epochs=args.epochs
+                epochs=args.epochs,
+                max_len=max_len
             )
 
             # Evaluate
@@ -185,6 +208,47 @@ if __name__ == '__main__':
             result = evaluate(y_true, y_pred,
                             dataset_name=args.dataset,
                             model_name=model_name)
+            save_results(result)
+            all_results.append(result)
+
+        elif model_name in bert_models:
+            # BERT uses light preprocessing (keep punctuation and casing)
+            X, y = load_data(args.dataset, mode='bert')
+
+            # Optional subsampling — useful for large datasets on CPU
+            if args.max_samples and len(X) > args.max_samples:
+                import pandas as pd
+                df_sample = pd.DataFrame({'X': X, 'y': y}).sample(
+                    n=args.max_samples, random_state=42, replace=False
+                )
+                X, y = df_sample['X'], df_sample['y']
+                print(f'Subsampled to {args.max_samples} rows for BERT training.')
+
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=0.2, stratify=y, random_state=42
+            )
+            print(f'\n{"="*60}')
+            print(f'EXPERIMENT: {args.dataset} + {model_name}')
+            print('='*60)
+
+            # Twitter: short; Reddit/Russian VK: medium; C-SSRS: long posts
+            dataset_max_len = {'twitter': 64, 'reddit': 128, 'cssrs': 256, 'russian_vk': 128}
+            max_len = dataset_max_len.get(args.dataset, 128)
+
+            y_true, y_pred = run_bert_experiment(
+                X_train, X_test,
+                y_train, y_test,
+                dataset_name=args.dataset,
+                model_name=model_name,
+                epochs=args.bert_epochs,
+                batch_size=args.batch_size,
+                max_len=max_len
+            )
+
+            print_report(y_true, y_pred, args.dataset, model_name)
+            result = evaluate(y_true, y_pred,
+                              dataset_name=args.dataset,
+                              model_name=model_name)
             save_results(result)
             all_results.append(result)
 

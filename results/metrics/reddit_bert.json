@@ -1,0 +1,10 @@
+{
+    "dataset": "reddit",
+    "model": "bert",
+    "accuracy": 0.9653,
+    "precision": 0.9654,
+    "recall": 0.9653,
+    "f1": 0.9653,
+    "f1_macro": 0.9652,
+    "roc_auc": null
+}

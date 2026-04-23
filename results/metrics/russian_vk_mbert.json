@@ -1,0 +1,10 @@
+{
+    "dataset": "russian_vk",
+    "model": "mbert",
+    "accuracy": 0.992,
+    "precision": 0.992,
+    "recall": 0.992,
+    "f1": 0.992,
+    "f1_macro": 0.992,
+    "roc_auc": null
+}

@@ -1,0 +1,10 @@
+{
+    "dataset": "twitter",
+    "model": "bert",
+    "accuracy": 0.9468,
+    "precision": 0.9469,
+    "recall": 0.9468,
+    "f1": 0.9468,
+    "f1_macro": 0.943,
+    "roc_auc": null
+}

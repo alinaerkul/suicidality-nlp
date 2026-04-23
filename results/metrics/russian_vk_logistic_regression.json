@@ -1,0 +1,10 @@
+{
+    "dataset": "russian_vk",
+    "model": "logistic_regression",
+    "accuracy": 0.9899,
+    "precision": 0.99,
+    "recall": 0.9899,
+    "f1": 0.9899,
+    "f1_macro": 0.9899,
+    "roc_auc": 0.9996
+}

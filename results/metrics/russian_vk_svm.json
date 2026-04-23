@@ -1,0 +1,10 @@
+{
+    "dataset": "russian_vk",
+    "model": "svm",
+    "accuracy": 0.9948,
+    "precision": 0.9948,
+    "recall": 0.9948,
+    "f1": 0.9948,
+    "f1_macro": 0.9948,
+    "roc_auc": null
+}

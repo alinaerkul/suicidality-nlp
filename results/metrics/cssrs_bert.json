@@ -1,0 +1,10 @@
+{
+    "dataset": "cssrs",
+    "model": "bert",
+    "accuracy": 0.72,
+    "precision": 0.7173,
+    "recall": 0.72,
+    "f1": 0.7138,
+    "f1_macro": 0.6997,
+    "roc_auc": null
+}

@@ -17,18 +17,28 @@ import pandas as pd
 
 # ── Optional imports (install if needed) ──────────────────────────────────────
 try:
+    import ssl
+    ssl._create_default_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+
+try:
     import nltk
     from nltk.corpus import stopwords
     from nltk.stem import PorterStemmer
     # Download required NLTK data on first run
     nltk.download("stopwords", quiet=True)
     nltk.download("punkt", quiet=True)
-    STOPWORDS = set(stopwords.words("english"))
+    STOPWORDS_EN = set(stopwords.words("english"))
+    STOPWORDS_RU = set(stopwords.words("russian"))
+    STOPWORDS    = STOPWORDS_EN  # default — overridden per call
     STEMMER = PorterStemmer()
     NLTK_AVAILABLE = True
 except ImportError:
     NLTK_AVAILABLE = False
-    STOPWORDS = set()
+    STOPWORDS_EN = set()
+    STOPWORDS_RU = set()
+    STOPWORDS    = set()
     print("WARNING: nltk not installed. Stopword removal and stemming disabled.")
 
 
@@ -54,8 +64,13 @@ def remove_hashtags(text: str) -> str:
     return re.sub(r"#(\w+)", r"\1", text)
 
 
-def remove_special_characters(text: str) -> str:
-    """Remove characters that are not letters, digits, or spaces."""
+def remove_special_characters(text: str, language: str = 'english') -> str:
+    """Remove characters that are not letters, digits, or spaces.
+    Keeps Cyrillic characters when language='russian'.
+    """
+    if language == 'russian':
+        # Keep ASCII + Cyrillic letters, digits, spaces
+        return re.sub(r"[^a-zA-Z0-9\u0400-\u04FF\s]", " ", text)
     return re.sub(r"[^a-zA-Z0-9\s]", " ", text)
 
 
@@ -64,12 +79,13 @@ def remove_extra_whitespace(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-def remove_stopwords(text: str) -> str:
-    """Remove common English stopwords (e.g. 'the', 'is', 'and')."""
+def remove_stopwords(text: str, language: str = 'english') -> str:
+    """Remove common stopwords. Supports 'english' and 'russian'."""
     if not NLTK_AVAILABLE:
         return text
+    sw = STOPWORDS_RU if language == 'russian' else STOPWORDS_EN
     tokens = text.split()
-    tokens = [w for w in tokens if w not in STOPWORDS]
+    tokens = [w for w in tokens if w not in sw]
     return " ".join(tokens)
 
 
@@ -87,7 +103,8 @@ def apply_stemming(text: str) -> str:
 
 # ── Full pipeline functions ────────────────────────────────────────────────────
 
-def preprocess_for_ml(text: str, remove_stops: bool = True, stem: bool = False) -> str:
+def preprocess_for_ml(text: str, remove_stops: bool = True, stem: bool = False,
+                      language: str = 'english') -> str:
     """
     Full preprocessing pipeline for classical ML models (LR, SVM, RF).
 
@@ -107,10 +124,10 @@ def preprocess_for_ml(text: str, remove_stops: bool = True, stem: bool = False) 
     text = remove_urls(text)
     text = remove_mentions(text)
     text = remove_hashtags(text)
-    text = remove_special_characters(text)
+    text = remove_special_characters(text, language=language)
     text = remove_extra_whitespace(text)
     if remove_stops:
-        text = remove_stopwords(text)
+        text = remove_stopwords(text, language=language)
     if stem:
         text = apply_stemming(text)
     return text
@@ -142,6 +159,7 @@ def preprocess_for_bert(text: str) -> str:
 def preprocess_dataframe(df: pd.DataFrame,
                          text_col: str = "text",
                          mode: str = "ml",
+                         language: str = "english",
                          **kwargs) -> pd.DataFrame:
     """
     Apply preprocessing to an entire DataFrame column.
@@ -159,7 +177,7 @@ def preprocess_dataframe(df: pd.DataFrame,
 
     if mode == "ml":
         df["text_clean"] = df[text_col].astype(str).apply(
-            lambda x: preprocess_for_ml(x, **kwargs)
+            lambda x: preprocess_for_ml(x, language=language, **kwargs)
         )
     elif mode == "bert":
         df["text_clean"] = df[text_col].astype(str).apply(preprocess_for_bert)

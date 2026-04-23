@@ -129,6 +129,42 @@ def load_cssrs(filepath: str) -> pd.DataFrame:
     return df
 
 
+def load_russian_vk(filepath: str) -> pd.DataFrame:
+    """
+    Load the Mendeley Russian Depressive Posts dataset (VKontakte, 2020).
+
+    Source: https://data.mendeley.com/datasets/838dbcjpxb/1
+    Paper:  https://pmc.ncbi.nlm.nih.gov/articles/PMC7016367/
+
+    Expected xlsx columns: text, label, age
+        label: 0 = neutral/non-depressive, 1 = depressive
+        age:   author age (kept as metadata, not used for training)
+
+    Returns a DataFrame with columns: text, label, binary_label, dataset_name
+    """
+    df = pd.read_excel(filepath, engine='openpyxl')
+
+    # Normalise column names in case of minor variations
+    df.columns = [c.strip().lower() for c in df.columns]
+
+    df = df.rename(columns={'text': 'text', 'label': 'binary_label'})
+
+    # Drop rows with missing text
+    df = df.dropna(subset=['text']).reset_index(drop=True)
+
+    # Store original string label for readability
+    df['label'] = df['binary_label'].map({0: 'non-depressive', 1: 'depressive'})
+
+    df['dataset_name'] = 'russian_vk'
+
+    df = df[['text', 'label', 'binary_label', 'dataset_name']]
+
+    print(f'[Russian VK] Loaded {len(df)} rows.')
+    print(f'[Russian VK] Label distribution:\n{df["label"].value_counts().to_string()}\n')
+
+    return df
+
+
 # ── Binary mapping helper ──────────────────────────────────────────────────────
 
 def apply_binary_mapping(df: pd.DataFrame, dataset_name: str) -> pd.DataFrame:
@@ -151,9 +187,13 @@ def apply_binary_mapping(df: pd.DataFrame, dataset_name: str) -> pd.DataFrame:
     elif dataset_name == "cssrs":
         df["binary_label"] = df["label"].map(CSSRS_BINARY_MAP)
 
+    elif dataset_name == "russian_vk":
+        # Labels are already 0/1 integers — just ensure correct type
+        df["binary_label"] = df["binary_label"].astype(int)
+
     else:
         raise ValueError(f"Unknown dataset_name: '{dataset_name}'. "
-                         f"Expected one of: twitter, reddit_binary, cssrs")
+                         f"Expected one of: twitter, reddit_binary, cssrs, russian_vk")
 
     # Sanity check — make sure no labels were missed
     missing = df["binary_label"].isna().sum()
@@ -173,18 +213,21 @@ def load_all(data_dir: str) -> dict:
         Suicide_Ideation_DatasetTwitterbased.csv
         Suicide_Detection.csv
         500_Reddit_users_posts_labels.csv
+        Depressive data.xlsx
 
     Returns a dict:
         {
             "twitter":       DataFrame,
             "reddit_binary": DataFrame,
             "cssrs":         DataFrame,
+            "russian_vk":    DataFrame,  (if file present)
         }
     """
     paths = {
         "twitter":       os.path.join(data_dir, "Suicide_Ideation_DatasetTwitterbased.csv"),
         "reddit_binary": os.path.join(data_dir, "Suicide_Detection.csv"),
         "cssrs":         os.path.join(data_dir, "500_Reddit_users_posts_labels.csv"),
+        "russian_vk":    os.path.join(data_dir, "Depressive data.xlsx"),
     }
 
     datasets = {}
@@ -198,6 +241,8 @@ def load_all(data_dir: str) -> dict:
             datasets[name] = load_reddit_binary(path)
         elif name == "cssrs":
             datasets[name] = load_cssrs(path)
+        elif name == "russian_vk":
+            datasets[name] = load_russian_vk(path)
 
     return datasets
 
