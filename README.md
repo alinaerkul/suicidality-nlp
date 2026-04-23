@@ -138,7 +138,6 @@ suicidality-nlp/
 │   └── plots/                  ← all charts and word clouds
 ├── requirements.txt
 ├── .gitignore
-├── CLAUDE.md                   ← persistent context for Claude Code sessions
 └── README.md
 ```
 
