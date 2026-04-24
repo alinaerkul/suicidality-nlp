@@ -1,0 +1,10 @@
+{
+    "dataset": "zero_shot_reddit_to_ru",
+    "model": "xlmr_zero_shot",
+    "accuracy": 0.7933,
+    "precision": 0.8245,
+    "recall": 0.7933,
+    "f1": 0.7882,
+    "f1_macro": 0.7882,
+    "roc_auc": null
+}

@@ -67,10 +67,14 @@ def remove_hashtags(text: str) -> str:
 def remove_special_characters(text: str, language: str = 'english') -> str:
     """Remove characters that are not letters, digits, or spaces.
     Keeps Cyrillic characters when language='russian'.
+    For Russian, also strips Latin (ASCII) letter sequences to prevent
+    English words and URL fragments leaking into Russian features.
     """
     if language == 'russian':
-        # Keep ASCII + Cyrillic letters, digits, spaces
-        return re.sub(r"[^a-zA-Z0-9\u0400-\u04FF\s]", " ", text)
+        # Keep only Cyrillic letters and spaces — strip Latin words, digits, punctuation
+        # This prevents English words (e.g. 'depression', 'twitter', 'com')
+        # and numbers (years, dates) from becoming spurious features
+        return re.sub(r"[^\u0400-\u04FF\s]", " ", text)
     return re.sub(r"[^a-zA-Z0-9\s]", " ", text)
 
 
