@@ -76,21 +76,26 @@ A reproducible, cross-lingual NLP benchmark for detecting suicidality and depres
 
 The table below lists the papers most closely related to this project — either as **dataset sources** (must-cite) or as **methodological comparisons**. All numbers are verified against primary sources.
 
-| Paper | Relation to this project | Dataset | Best reported result |
-|---|---|---|---|
-| Narynov et al. (2020) | **Russian VK dataset source** — must cite | VK 64k | No F1 reported (data paper) |
-| Gaur et al. (2019) | **C-SSRS dataset source** — must cite | C-SSRS 500 users | CNN > SVM (5-class; no absolute F1) |
-| Gaur et al. (2021) | Temporal C-SSRS analysis | C-SSRS 448 users | AUC 0.78 (LSTM+CNN) |
-| Ji et al. (2022) | MentalBERT — domain-adapted transformer | UMD Reddit / Twitter | F1 58.26 on UMD suicide detection |
-| Haque et al. (2021) | Label noise in Reddit datasets | Reddit 1.9k | F1 73.61 (GUSE+Dense) |
-| Yeskuatov et al. (2022) | Review: 21 models on Reddit datasets | Multiple Reddit | XGBoost F1 0.957 (7k binary) |
-| Aguirre et al. (2024) | Closest multilingual work (6 European languages) | Spanish tweets (translated) | mT5 F1 88.1 (EN, with train data) |
-| Pokrywka et al. (2024) | SOTA multiclass suicide detection | Reddit 500 (4-class) | GPT-4o fine-tuned wF1 74.8 |
+| Paper | Venue | Relation to this project | Dataset | Best reported result |
+|---|---|---|---|---|
+| Narynov et al. (2020) | Data in Brief | **Russian VK dataset source** — must cite | VK 64k posts | No F1 reported (data paper) |
+| Gaur et al. (2019) | WWW 2019 | **C-SSRS dataset source** — must cite | C-SSRS 500 users | CNN > SVM (+4.2% recall, 5-class) |
+| Gaur et al. (2021) | PLOS ONE | Temporal C-SSRS analysis | C-SSRS 448 users | AUC 0.78 (LSTM+CNN, 5-class) |
+| Ji et al. (2022) | LREC 2022 | MentalBERT — domain-adapted BERT | UMD Reddit / Twitter | F1 58.26 suicide / F1 89.01 Twitter |
+| Yang et al. (2024) | WWW 2024 | MentaLLaMA — LLMs vs fine-tuned (10 datasets) | Reddit / Twitter multi-task | MentalRoBERTa F1 95.11 (Depression_Reddit) |
+| Haque et al. (2021) | ECML 2021 | Label noise in Reddit subreddit labels | Reddit 1.9k | F1 73.61 (GUSE+Dense) |
+| Yeskuatov et al. (2022) | IJERPH | Review: 21 models on Reddit datasets | Multiple Reddit | XGBoost F1 0.957 (7k binary) |
+| **Raihan et al. (2025)** ⭐ | arXiv 2025 | **LLMs on same Russian VK dataset** | **VK 32k (Narynov)** | **GPT-4 F1 0.87 (zero-shot CoT)** |
+| Aguirre et al. (2024) | COLING 2025 | Multilingual model (6 European languages) | Spanish tweets (translated) | mT5 F1 88.1 (with train data in all languages) |
+| Bucur et al. (2025) | arXiv 2025 | Survey: 108 multilingual mental health datasets | 24 languages | — (survey) |
+| Nguyen & Pham (2024) | arXiv 2024 | LLM ensemble, limited labels | Reddit 4-class (500) | Ensemble F1 0.811 |
+| Pokrywka et al. (2024) | arXiv 2024 | DeBERTa/GPT-4 multiclass suicide | Reddit 4-class (500) | GPT-4o fine-tuned wF1 74.8 |
 
 **Key differentiators of this project vs. all listed papers:**
-- Only project benchmarking on Russian VK with transformers
-- Only project performing true zero-shot EN→RU transfer (no target-language data at all)
-- Aguirre et al. (2024) is the closest multilingual comparison — but they use translated training data for each target language; our zero-shot setup is strictly harder
+- Only project providing both fine-tuned transformer benchmarks **and** true zero-shot EN→RU transfer on the Narynov Russian VK dataset
+- Raihan et al. (2025) ⭐ use the same Russian VK dataset — GPT-4 zero-shot CoT gets F1=0.87; our fine-tuned XLM-R achieves F1=0.9942, showing fine-tuning beats LLM prompting; our XLM-R zero-shot (0.7882) is comparable to smaller open-source LLMs (DeepSeek R1-14B: 0.79)
+- Aguirre et al. (2024) is the closest multilingual comparison — but they use translated training data for each target language; our zero-shot setup (train on English only, test on Russian) is strictly harder
+- Bucur et al. (2025) survey confirms Russian is an under-represented language in mental health NLP — this project directly fills that gap
 
 ---
 
@@ -404,21 +409,25 @@ ROC-AUC measures ranking quality independently of the classification threshold. 
 
 Results are only compared where datasets are compatible. Direct numeric comparison requires caution: dataset sizes, label schemes, and train/test splits differ across papers. See [`LITERATURE_REVIEW.md`](LITERATURE_REVIEW.md) for full discussion.
 
-| Work | Dataset | Model | F1 |
-|---|---|---|---|
-| Gaur et al. (2019) | C-SSRS Reddit (5-class) | CNN + domain knowledge | +4.2% recall vs. prior SOTA† |
-| Haque et al. (2021) | Reddit r/SW + r/Depression (1.9k) | GUSE + Dense | 0.7361 |
-| Ji et al. (2022) MentalBERT | UMD Reddit Suicide | MentalBERT | 0.5826 |
-| Yeskuatov et al. review (2022) | Reddit binary (7k) | XGBoost | 0.9570 |
-| Aguirre et al. (2024) | Spanish/EN tweets (multilingual, with train data) | mT5 | 0.8810 |
-| Pokrywka et al. (2024) | Reddit 4-class competition (500 posts) | GPT-4o fine-tuned | 0.7480 |
-| **This thesis** | Reddit 232k binary | BERT | **0.9653** |
-| **This thesis** | Twitter 1.8k binary | BERT | **0.9468** |
-| **This thesis** | C-SSRS binary† | SVM | **0.7270** |
-| **This thesis** | Russian VK 64k | XLM-R fine-tuned | **0.9942** |
-| **This thesis** | Russian VK — zero-shot (no RU train data) | XLM-R | **0.7882** |
+| Work | Venue | Dataset | Model | F1 |
+|---|---|---|---|---|
+| Gaur et al. (2019) | WWW 2019 | C-SSRS Reddit (5-class, 500 users) | CNN + domain knowledge | relative only† |
+| Haque et al. (2021) | ECML 2021 | Reddit r/SW + r/Depression (1.9k) | GUSE + Dense | 0.7361 |
+| Ji et al. (2022) | LREC 2022 | UMD Reddit suicide | MentalBERT | 0.5826 |
+| Yang et al. (2024) | WWW 2024 | Depression_Reddit (1.8k) | RoBERTa-base | 0.9511 |
+| Yeskuatov et al. (2022) | IJERPH | Reddit binary (7k posts) | XGBoost | 0.9570 |
+| Aguirre et al. (2024) | COLING 2025 | Spanish/EN tweets (with train data in all languages) | mT5 | 0.8810 |
+| Nguyen & Pham (2024) | arXiv | Reddit 4-class competition (500 posts) | LLM ensemble | 0.8110 |
+| Pokrywka et al. (2024) | arXiv | Reddit 4-class competition (500 posts) | GPT-4o fine-tuned | 0.7480 |
+| **Raihan et al. (2025) ⭐** | **arXiv** | **Russian VK (Narynov — same dataset)** | **GPT-4 zero-shot CoT** | **0.8700** |
+| **This thesis** | — | Reddit 232k binary | BERT | **0.9653** |
+| **This thesis** | — | Twitter 1.8k binary | BERT | **0.9468** |
+| **This thesis** | — | C-SSRS binary† | SVM | **0.7270** |
+| **This thesis** | — | Russian VK 64k | XLM-R fine-tuned | **0.9942** |
+| **This thesis** | — | Russian VK — zero-shot EN→RU | XLM-R | **0.7882** |
 
-† C-SSRS: original paper uses 5-class labels; this thesis uses binary (suicidal/non-suicidal). Direct comparison not possible.
+† C-SSRS: original paper uses 5-class labels; this thesis collapses to binary. Direct comparison not possible.  
+⭐ Raihan et al. (2025) use the same Narynov et al. Russian VK dataset. Our fine-tuned XLM-R (0.9942) outperforms their GPT-4 zero-shot (0.87). Our XLM-R zero-shot (0.7882) is comparable to their DeepSeek R1-14B (0.79).
 
 ---
 
