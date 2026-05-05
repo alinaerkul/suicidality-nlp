@@ -4,16 +4,26 @@ zero_shot_transfer.py
 Zero-shot cross-lingual transfer experiment.
 
 The key idea:
-    - Fine-tune XLM-RoBERTa on ENGLISH data only (Reddit)
+    - Fine-tune a multilingual transformer on ENGLISH data only (Reddit)
     - Evaluate directly on RUSSIAN VK — no Russian training at all
     - This tests whether multilingual representations transfer across languages
+
+Supported models:
+    xlmr  — xlm-roberta-base  (100 languages, large multilingual corpus)
+    mbert — bert-base-multilingual-cased  (104 languages, smaller corpus)
+
+Comparing XLM-R vs mBERT zero-shot directly tests the hypothesis:
+    "Does the scale of multilingual pre-training affect cross-lingual transfer quality?"
+    XLM-R was trained on 2.5TB of multilingual text; mBERT on ~17GB.
+    If XLM-R zero-shot > mBERT zero-shot, scale matters for transfer.
 
 Why this matters for the thesis:
     - "Cross-lingual" means the model was never shown the target language during training
     - Comparison:
         Fine-tuned (Russian training)  → XLM-R F1 = 0.9942
-        Zero-shot  (no Russian at all) → XLM-R F1 = ???
-    - The gap between these two numbers quantifies how much Russian training data helps
+        Zero-shot  (no Russian at all) → XLM-R F1 = 0.7882
+        Zero-shot  (no Russian at all) → mBERT F1 = ???
+    - The gap between XLM-R and mBERT zero-shot quantifies how much pre-training scale helps
 
 Preprocessing order
 -------------------
@@ -26,6 +36,7 @@ Preprocessing is applied only to the Russian test partition.
 
 Run from project root:
     python scripts/zero_shot_transfer.py
+    python scripts/zero_shot_transfer.py --model mbert --source reddit --max_samples 20000 --epochs 3
     python scripts/zero_shot_transfer.py --source twitter --max_samples 10000
     python scripts/zero_shot_transfer.py --source both --max_samples 20000
 """
@@ -44,6 +55,7 @@ from src.dataset_loader import (
 from src.models_transformer import run_bert_experiment
 from src.evaluation import evaluate, print_report, save_results
 from src.utils import stratified_split, preprocess_series
+from src.config import CFG
 
 
 # ── Data paths ─────────────────────────────────────────────────────────────
@@ -114,28 +126,43 @@ def load_russian_test():
     return X_test, y_test
 
 
-def run_zero_shot(source='reddit', max_samples=20000, epochs=3,
-                  batch_size=16, max_len=128):
+def run_zero_shot(source='reddit', max_samples=20000, epochs=None,
+                  batch_size=None, max_len=None, model='xlmr'):
     """Full zero-shot transfer pipeline.
 
     1. Load English training data (Reddit / Twitter / both)
     2. Load Russian VK test set (same split as fine-tuned experiments)
-    3. Fine-tune XLM-R on English ONLY
+    3. Fine-tune the chosen multilingual model on English ONLY
     4. Evaluate on Russian — no Russian ever seen during training
     5. Save results
 
-    The experiment name encodes the source:
-        zero_shot_reddit_to_ru
-        zero_shot_twitter_to_ru
-        zero_shot_both_to_ru
+    model argument:
+        'xlmr'  — xlm-roberta-base (default, stronger)
+        'mbert' — bert-base-multilingual-cased (smaller pre-training corpus)
+
+    The experiment name encodes the model and source:
+        zero_shot_reddit_to_ru_xlmr_zero_shot
+        zero_shot_reddit_to_ru_mbert_zero_shot
     """
     experiment_name = f'zero_shot_{source}_to_ru'
+    result_model_name = f'{model}_zero_shot'
+
+    # Resolve hyperparameters from config (same defaults as fine-tuning runs)
+    epochs     = epochs     or CFG['bert']['epochs']
+    batch_size = batch_size or CFG['bert']['batch_size']
+    max_len    = max_len    or CFG['bert']['max_len']['reddit']
+    lr         = CFG['bert']['learning_rate']
+
+    model_display = {
+        'xlmr':  'XLM-RoBERTa (xlm-roberta-base)',
+        'mbert': 'mBERT (bert-base-multilingual-cased)',
+    }.get(model, model)
 
     print(f'\n{"="*60}')
     print(f'ZERO-SHOT TRANSFER EXPERIMENT')
     print(f'  Source language : English ({source})')
     print(f'  Target language : Russian (VK)')
-    print(f'  Model           : XLM-RoBERTa (xlm-roberta-base)')
+    print(f'  Model           : {model_display}')
     print(f'  Training samples: {max_samples}')
     print(f'  Epochs          : {epochs}')
     print(f'{"="*60}')
@@ -147,7 +174,7 @@ def run_zero_shot(source='reddit', max_samples=20000, epochs=3,
     X_test_ru, y_test_ru = load_russian_test()
 
     # Step 3 & 4: Fine-tune on English, evaluate on Russian
-    print(f'\nFine-tuning XLM-R on English ({source})...')
+    print(f'\nFine-tuning {model} on English ({source})...')
     print('The model will never see any Russian text during training.')
     print('Test evaluation is on Russian VK — pure zero-shot transfer.\n')
 
@@ -155,38 +182,45 @@ def run_zero_shot(source='reddit', max_samples=20000, epochs=3,
         X_train, X_test_ru,
         y_train, y_test_ru,
         dataset_name=experiment_name,
-        model_name='xlmr',
+        model_name=model,
         epochs=epochs,
         batch_size=batch_size,
         max_len=max_len,
+        lr=lr,
     )
 
     # Step 5: Evaluate and save
-    print_report(y_true, y_pred, experiment_name, 'xlmr_zero_shot')
+    print_report(y_true, y_pred, experiment_name, result_model_name)
     results = evaluate(y_true, y_pred,
                        dataset_name=experiment_name,
-                       model_name='xlmr_zero_shot')
+                       model_name=result_model_name)
 
     print(f'\n{"="*60}')
-    print(f'ZERO-SHOT RESULT: F1 = {results["f1"]} | Accuracy = {results["accuracy"]}')
+    print(f'ZERO-SHOT RESULT ({model}): F1 = {results["f1"]} | Accuracy = {results["accuracy"]}')
     print(f'{"="*60}')
 
-    # Compare with fine-tuned result
+    # Compare with fine-tuned result and (if mBERT) with XLM-R zero-shot
     finetuned_f1 = 0.9942  # XLM-R fine-tuned on Russian VK (from results/metrics)
     drop = finetuned_f1 - results['f1']
     print(f'\nComparison:')
     print(f'  XLM-R fine-tuned on Russian VK : F1 = {finetuned_f1}')
-    print(f'  XLM-R zero-shot (English only) : F1 = {results["f1"]}')
-    print(f'  Gap (cost of no Russian data)  : {drop:+.4f}')
+    if model == 'mbert':
+        xlmr_zero_f1 = 0.7882  # from saved results
+        print(f'  XLM-R zero-shot (English only) : F1 = {xlmr_zero_f1}')
+    print(f'  {model} zero-shot (English only): F1 = {results["f1"]}')
+    print(f'  Gap vs fine-tuned              : {drop:+.4f}')
+    if model == 'mbert':
+        diff = results['f1'] - xlmr_zero_f1
+        print(f'  mBERT vs XLM-R zero-shot       : {diff:+.4f}')
 
     if results['f1'] > 0.5:
         print('\n✓ Model transfers above random baseline — cross-lingual signal detected.')
     if drop < 0.1:
-        print('✓ Minimal gap — XLM-R transfers very well from English to Russian.')
+        print(f'✓ Minimal gap — {model} transfers very well from English to Russian.')
     elif drop < 0.2:
-        print('→ Moderate gap — Russian fine-tuning adds meaningful performance.')
+        print(f'→ Moderate gap — Russian fine-tuning adds meaningful performance.')
     else:
-        print('→ Large gap — task is significantly harder without Russian training data.')
+        print(f'→ Large gap — task is significantly harder without Russian training data.')
 
     save_results(results)
     return results
@@ -196,6 +230,9 @@ def run_zero_shot(source='reddit', max_samples=20000, epochs=3,
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Zero-shot cross-lingual transfer: English → Russian')
+    parser.add_argument('--model', type=str, default='xlmr',
+                        choices=['xlmr', 'mbert'],
+                        help='Multilingual model to use (default: xlmr)')
     parser.add_argument('--source', type=str, default='reddit',
                         choices=['reddit', 'twitter', 'both'],
                         help='English source dataset for training')
@@ -212,4 +249,5 @@ if __name__ == '__main__':
         epochs=args.epochs,
         batch_size=args.batch_size,
         max_len=args.max_len,
+        model=args.model,
     )
