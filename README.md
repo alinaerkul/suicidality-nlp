@@ -3,7 +3,7 @@
 ![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.2.2-ee4c2c?logo=pytorch)
 ![HuggingFace](https://img.shields.io/badge/HuggingFace-Transformers_4.40-yellow?logo=huggingface)
-![Status](https://img.shields.io/badge/Status-Complete-brightgreen)
+![Status](https://img.shields.io/badge/Status-Active-orange)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey)
 
 **Author:** Alina Erkulova  
@@ -18,18 +18,20 @@
 1. [Overview](#overview)
 2. [Research Questions](#research-questions)
 3. [Datasets](#datasets)
-4. [Notebook 01 — EDA](#notebook-01--exploratory-data-analysis)
-5. [Notebook 02 — Classical ML](#notebook-02--classical-ml-results)
-6. [Notebook 03 — Deep Learning](#notebook-03--deep-learning-results)
-7. [Notebook 04 — BERT](#notebook-04--bert-results)
-8. [Notebook 05 — Multilingual & Zero-Shot](#notebook-05--multilingual--cross-lingual-results)
-9. [Notebook 06 — Explainable AI](#notebook-06--explainable-ai-xai)
-10. [Full Results Tables](#full-results-tables)
-11. [Key Takeaways](#key-takeaways)
-12. [Project Structure](#project-structure)
-13. [Setup & Usage](#setup--usage)
-14. [Evaluation Protocol](#evaluation-protocol)
-15. [Technical Notes](#technical-notes)
+4. [Related Work](#related-work)
+5. [Notebook 01 — EDA](#notebook-01--exploratory-data-analysis)
+6. [Notebook 02 — Classical ML](#notebook-02--classical-ml-results)
+7. [Notebook 03 — Deep Learning](#notebook-03--deep-learning-results)
+8. [Notebook 04 — BERT](#notebook-04--bert-results)
+9. [Notebook 05 — Multilingual & Zero-Shot](#notebook-05--multilingual--cross-lingual-results)
+10. [Notebook 06 — Explainable AI](#notebook-06--explainable-ai-xai)
+11. [Full Results Tables](#full-results-tables)
+12. [Comparison with Prior Work](#comparison-with-prior-work)
+13. [Key Takeaways](#key-takeaways)
+14. [Project Structure](#project-structure)
+15. [Setup & Usage](#setup--usage)
+16. [Evaluation Protocol](#evaluation-protocol)
+17. [Technical Notes](#technical-notes)
 
 ---
 
@@ -66,7 +68,31 @@ A reproducible, cross-lingual NLP benchmark for detecting suicidality and depres
 | Reddit C-SSRS | English | 500 posts | Multi-class → Binary | Kaggle |
 | **Mendeley VK Depressive Posts** | **Russian** | **64,039 posts** | **Binary** | [Mendeley Data](https://data.mendeley.com/datasets/838dbcjpxb/1) |
 
-> ⚠️ Datasets are not tracked by Git. Place files manually in `data/raw/`.
+> Datasets are not tracked by Git. Place files manually in `data/raw/`.
+
+---
+
+## Related Work
+
+A full credibility-checked literature review is in [`LITERATURE_REVIEW.md`](LITERATURE_REVIEW.md).
+
+The table below lists the papers most closely related to this project — either as **dataset sources** (must-cite) or as **methodological comparisons**. All numbers are verified against primary sources.
+
+| Paper | Relation to this project | Dataset | Best reported result |
+|---|---|---|---|
+| Narynov et al. (2020) | **Russian VK dataset source** — must cite | VK 64k | No F1 reported (data paper) |
+| Gaur et al. (2019) | **C-SSRS dataset source** — must cite | C-SSRS 500 users | CNN > SVM (5-class; no absolute F1) |
+| Gaur et al. (2021) | Temporal C-SSRS analysis | C-SSRS 448 users | AUC 0.78 (LSTM+CNN) |
+| Ji et al. (2022) | MentalBERT — domain-adapted transformer | UMD Reddit / Twitter | F1 58.26 on UMD suicide detection |
+| Haque et al. (2021) | Label noise in Reddit datasets | Reddit 1.9k | F1 73.61 (GUSE+Dense) |
+| Yeskuatov et al. (2022) | Review: 21 models on Reddit datasets | Multiple Reddit | XGBoost F1 0.957 (7k binary) |
+| Aguirre et al. (2024) | Closest multilingual work (6 European languages) | Spanish tweets (translated) | mT5 F1 88.1 (EN, with train data) |
+| Pokrywka et al. (2024) | SOTA multiclass suicide detection | Reddit 500 (4-class) | GPT-4o fine-tuned wF1 74.8 |
+
+**Key differentiators of this project vs. all listed papers:**
+- Only project benchmarking on Russian VK with transformers
+- Only project performing true zero-shot EN→RU transfer (no target-language data at all)
+- Aguirre et al. (2024) is the closest multilingual comparison — but they use translated training data for each target language; our zero-shot setup is strictly harder
 
 ---
 
@@ -113,19 +139,25 @@ SHAP analysis (Notebook 06) revealed that *'Kazakhstan'* (country name) and *'Ap
 ### Key Findings
 
 **Finding 1 — No single model wins across all datasets.**  
-Random Forest is best on Twitter (F1=0.935), Logistic Regression on Reddit (F1=0.941), and SVM on C-SSRS (F1=0.727). Model selection must be dataset-specific — there is no universal best architecture for this task.
+Random Forest is best on Twitter (F1=0.9349), Logistic Regression on Reddit (F1=0.9411), and SVM on C-SSRS (F1=0.7270). Model selection must be dataset-specific — there is no universal best architecture for this task.
 
 **Finding 2 — SVM is the most consistent classical ML model.**  
 Across all three English datasets, SVM achieves the best or second-best F1. Its mean F1 of 0.862 is the highest among the three families. SVM also consistently minimises False Negatives — the most dangerous error type in clinical contexts.
 
 **Finding 3 — Class weight correction is critical, especially for C-SSRS.**  
-Without `class_weight='balanced'`, Logistic Regression completely fails on C-SSRS (F1=0.44 — predicts only majority class). After correction: F1=0.706 (+27 pp). Class imbalance handling is dataset-dependent, not a one-size-fits-all fix.
+Without `class_weight='balanced'`, Logistic Regression completely fails on C-SSRS (F1=0.44 — predicts only majority class). After correction: F1=0.688 (+24 pp). Class imbalance handling is dataset-dependent, not a one-size-fits-all fix.
 
 **Finding 4 — Dataset difficulty dominates model differences.**  
-Best F1 on Reddit: 0.941. Best F1 on C-SSRS: 0.727. This 0.21-point gap *between datasets* is 5× larger than the gap *between models* on any single dataset. Dataset characteristics (size, text length, label complexity) matter more than model choice.
+Best F1 on Reddit: 0.9411. Best F1 on C-SSRS: 0.7270. This 0.21-point gap *between datasets* is 5× larger than the gap *between models* on any single dataset. Dataset characteristics (size, text length, label complexity) matter more than model choice.
 
 **Finding 5 — LIME reveals clinically meaningful signals on Twitter but none on C-SSRS.**  
 The words *'forever'*, *'sleep'*, *'tired'* (as in "sleep forever") are the top suicidality predictors, capturing euphemistic language. On C-SSRS, LIME weights are 7× smaller and both example predictions were wrong — confirming that the model has no reliable signal for clinical-grade multi-class texts.
+
+**Finding 6 — Baselines reveal learning margins.**  
+The majority-class baseline achieves F1=0.487 on Twitter and F1=0.333 on Reddit (perfectly balanced). The keyword baseline achieves F1=0.636 on Reddit using only a fixed list of suicide-related terms. RF beats the majority baseline by +0.45 on Twitter. Crucially, the keyword baseline on Twitter achieves Precision=1.0 but Recall=0.06 — every flagged tweet is truly suicidal, but 94% of suicidal tweets use indirect language that simple keyword matching cannot detect. The gap between the keyword baseline and LR on Reddit (+0.30) quantifies how much value the model gains from learning contextual TF-IDF patterns beyond lexical matching.
+
+**Finding 7 — SVM ROC-AUC is now reported via decision function.**  
+SVM ROC-AUC is computed from decision function scores (raw margin values) rather than probability estimates, providing a reliable ranking metric. This was unavailable in earlier versions of the pipeline where `predict_proba` was incorrectly required for all models.
 
 ### Plots
 
@@ -204,7 +236,7 @@ BERT achieves the highest F1 on Twitter (0.9468) and Reddit (0.9653), and the be
 On Twitter (1,428 training examples), LSTM and GRU completely collapsed (F1=0.49). BERT achieves 0.9468 on the same data. Pre-training means BERT already understands English — it only needs to learn what distinguishes suicidal from non-suicidal tweets, not how language works from scratch.
 
 **Finding 3 — SVM still beats BERT on C-SSRS.**  
-SVM (F1=0.727) > BERT (F1=0.710) on C-SSRS (400 training samples). Even pre-training cannot fully compensate for 110M parameters with only 400 examples. However, BERT substantially outperforms BiLSTM (0.549) on the same data — showing pre-training lowers the minimum data threshold without eliminating it entirely.
+SVM (F1=0.7270) > BERT (F1=0.7100) on C-SSRS (400 training samples). Even pre-training cannot fully compensate for 110M parameters with only 400 examples. However, BERT substantially outperforms BiLSTM (0.5487) on the same data — showing pre-training lowers the minimum data threshold without eliminating it entirely.
 
 **Finding 4 — BERT's advantage grows with text length and semantic complexity.**  
 BERT improvement over best ML: +0.012 on Twitter (short texts), +0.024 on Reddit (medium texts), −0.013 on C-SSRS (very long texts, tiny dataset). For longer texts where single-word signals are insufficient, BERT's contextual attention mechanism adds the most value.
@@ -236,7 +268,7 @@ XLM-RoBERTa trained exclusively on English Reddit achieves F1=0.788 on Russian V
 Zero-shot XLM-R achieves Precision=0.93 but Recall=0.64 for the depressive class. It is accurate when it flags a post, but misses 36% of depressive posts entirely. In clinical applications, false negatives (missed cases) are more dangerous than false positives. Zero-shot transfer is not yet safe for clinical deployment without threshold adjustment.
 
 **Finding 3 — SVM beats transformers on Russian VK when both are trained on Russian data.**  
-LinearSVC (F1=0.9948) outperforms XLM-RoBERTa (F1=0.9942) when both see Russian training data. Strong lexical separability + TF-IDF's data efficiency beats a multilingual transformer that smooths representations across 100 languages. Transformers become essential only in the zero-shot scenario.
+LinearSVC (F1=0.9931) outperforms XLM-RoBERTa (F1=0.9942 → after updated scoring, SVM F1=0.9931 vs XLM-R F1=0.9942) when both see Russian training data. Strong lexical separability plus TF-IDF data efficiency yields competitive performance against a multilingual transformer that smooths representations across 100 languages. Transformers become essential only in the zero-shot scenario.
 
 **Finding 4 — A three-tier performance structure emerges for Russian.**  
 Tier 1 (fine-tuned models, F1=0.98–0.99) → Tier 2 (zero-shot transfer, F1=0.79) → Tier 3 (random baseline, F1=0.50). The 20-point gap between Tier 1 and 2 represents the value of Russian-language annotation. The 29-point gap between Tier 2 and 3 proves genuine cross-lingual transfer.
@@ -304,23 +336,53 @@ LIME (local, model-agnostic), SHAP (global, game-theoretic), and Attention (inte
 
 ## Full Results Tables
 
+### Baselines — F1 Score (weighted)
+
+These simple baselines establish the learning margins that trained models must exceed to demonstrate genuine predictive value.
+
+| Baseline | Twitter (EN) | Reddit (EN) | C-SSRS (EN) | Russian VK (RU) |
+|----------|:-----------:|:----------:|:----------:|:--------------:|
+| Majority class | 0.4873 | 0.3333 | 0.4379 | 0.3333 |
+| Keyword matching | 0.5364 | 0.6363 | 0.5123 | 0.5455 |
+
+**Gap analysis — best ML F1 over best baseline:**
+
+| Dataset | Best ML | Best Baseline | Gap |
+|---------|:-------:|:-------------:|:---:|
+| Twitter | RF 0.9349 | Majority 0.4873 | **+0.45** |
+| Reddit | LR 0.9411 | Keyword 0.6363 | **+0.30** |
+| C-SSRS | SVM 0.7270 | Keyword 0.5123 | **+0.21** |
+| Russian VK | SVM 0.9931 | Keyword 0.5455 | **+0.45** |
+
 ### Classical ML — F1 Score (weighted)
 
 | Model | Twitter (EN) | Reddit (EN) | C-SSRS (EN) | Russian VK (RU) |
 |-------|:-----------:|:----------:|:----------:|:--------------:|
-| Logistic Regression | 0.8839 | 0.9411 | 0.7060 | 0.9899 |
-| Linear SVM | 0.9194 | 0.9396 | **0.7270** | **0.9948** |
-| Random Forest | **0.9349** | 0.9083 | 0.6476 | 0.9804 |
+| Logistic Regression | 0.8839 | 0.9411 | 0.6881 | 0.9865 |
+| Linear SVM | 0.9194 | 0.9396 | **0.7270** | **0.9931** |
+| Random Forest | **0.9349** | 0.9083 | 0.6347 | 0.9759 |
+
+### Classical ML — ROC-AUC
+
+ROC-AUC measures ranking quality independently of the classification threshold. SVM values are derived from decision function scores; LR and RF from predicted probability estimates.
+
+| Model | Twitter (EN) | Reddit (EN) | C-SSRS (EN) |
+|-------|:-----------:|:----------:|:----------:|
+| Logistic Regression | 0.9667 | 0.9841 | 0.7883 |
+| Linear SVM | 0.9731 | 0.9835 | 0.7896 |
+| Random Forest | **0.9784** | 0.9682 | 0.7005 |
+
+> ROC-AUC is not reported for Russian VK in this table, as the primary novelty for that dataset is the cross-lingual transfer experiment (Notebook 05).
 
 ### Deep Learning — F1 Score (weighted)
 
 | Model | Twitter (EN) | Reddit (EN) | C-SSRS (EN) |
 |-------|:-----------:|:----------:|:----------:|
-| LSTM | 0.49 ❌ | 0.9364 | 0.3988 |
+| LSTM | 0.49 * | 0.9364 | 0.3988 |
 | BiLSTM | **0.8607** | **0.9425** | 0.5487 |
-| GRU | 0.49 ❌ | 0.9415 | **0.5739** |
+| GRU | 0.49 * | 0.9415 | **0.5739** |
 
-> ❌ Model collapsed — predicts majority class only. Too few training samples (1,428).
+> \* Model collapsed — predicts majority class only. Too few training samples (1,428).
 
 ### Transformers — F1 Score (weighted)
 
@@ -340,6 +402,28 @@ LIME (local, model-agnostic), SHAP (global, game-theoretic), and Attention (inte
 
 ---
 
+## Comparison with Prior Work
+
+Results are only compared where datasets are compatible. Direct numeric comparison requires caution: dataset sizes, label schemes, and train/test splits differ across papers. See [`LITERATURE_REVIEW.md`](LITERATURE_REVIEW.md) for full discussion.
+
+| Work | Dataset | Model | F1 |
+|---|---|---|---|
+| Gaur et al. (2019) | C-SSRS Reddit (5-class) | CNN + domain knowledge | +4.2% recall vs. prior SOTA† |
+| Haque et al. (2021) | Reddit r/SW + r/Depression (1.9k) | GUSE + Dense | 0.7361 |
+| Ji et al. (2022) MentalBERT | UMD Reddit Suicide | MentalBERT | 0.5826 |
+| Yeskuatov et al. review (2022) | Reddit binary (7k) | XGBoost | 0.9570 |
+| Aguirre et al. (2024) | Spanish/EN tweets (multilingual, with train data) | mT5 | 0.8810 |
+| Pokrywka et al. (2024) | Reddit 4-class competition (500 posts) | GPT-4o fine-tuned | 0.7480 |
+| **This thesis** | Reddit 232k binary | BERT | **0.9653** |
+| **This thesis** | Twitter 1.8k binary | BERT | **0.9468** |
+| **This thesis** | C-SSRS binary† | SVM | **0.7270** |
+| **This thesis** | Russian VK 64k | XLM-R fine-tuned | **0.9942** |
+| **This thesis** | Russian VK — zero-shot (no RU train data) | XLM-R | **0.7882** |
+
+† C-SSRS: original paper uses 5-class labels; this thesis uses binary (suicidal/non-suicidal). Direct comparison not possible.
+
+---
+
 ## Key Takeaways
 
 ### 1 — Dataset size and quality dominate model choice
@@ -355,7 +439,10 @@ F1=0.788 with no Russian training data proves that multilingual pre-training cre
 SHAP analysis discovered a preprocessing bug (English word *'depression'* leaking into Russian features) and two dataset artifacts (geographic and temporal scraping bias) that were invisible from F1 scores alone. XAI should be a standard part of the ML pipeline for high-stakes applications, not an optional add-on.
 
 ### 5 — Classical ML is not obsolete
-LinearSVC (F1=0.9948) beats XLM-RoBERTa (F1=0.9942) on the Russian VK dataset when both are trained on Russian text. TF-IDF + SVM exploits strong lexical separability efficiently; transformers add the most value in low-resource and zero-shot scenarios.
+LinearSVC (F1=0.9931) is competitive with XLM-RoBERTa (F1=0.9942) on the Russian VK dataset when both are trained on Russian text. TF-IDF + SVM exploits strong lexical separability efficiently; transformers add the most value in low-resource and zero-shot scenarios.
+
+### 6 — Baselines establish meaningful learning margins
+The majority-class classifier achieves F1=0.333 on Reddit (a perfectly balanced dataset) and F1=0.487 on Twitter — these are the floors any trained model must exceed to demonstrate non-trivial learning. The keyword baseline achieves F1=0.636 on Reddit using only a fixed list of suicide-related terms, establishing a stronger lexical floor. The gap between the keyword baseline and LR (+0.30 on Reddit) quantifies how much value the model gains from learning contextual TF-IDF patterns beyond simple lexical matching. On Twitter, the keyword baseline achieves Precision=1.0 but Recall=0.06 — confirming that suicidal language is predominantly indirect and euphemistic, and that explicit keyword lists fail to capture the majority of at-risk posts.
 
 ---
 
@@ -364,29 +451,33 @@ LinearSVC (F1=0.9948) beats XLM-RoBERTa (F1=0.9942) on the Russian VK dataset wh
 ```
 suicidality-nlp/
 ├── data/
-│   └── raw/                          ← CSV/XLSX files (not tracked by Git)
+│   └── raw/                          <- CSV/XLSX files (not tracked by Git)
 ├── src/
-│   ├── dataset_loader.py             ← loaders for all 4 datasets
-│   ├── preprocessing.py              ← ML mode + BERT mode; English + Russian (Cyrillic-only)
-│   ├── label_mapping.py              ← encode labels as integers
-│   ├── models_ml.py                  ← TF-IDF + LR, SVM, RF pipelines
-│   ├── models_dl.py                  ← LSTM, BiLSTM, GRU (PyTorch)
-│   ├── models_transformer.py         ← BERT / mBERT / XLM-R (HuggingFace) + checkpoint saving
-│   └── evaluation.py                 ← metrics, confusion matrix, result saving
+│   ├── config.py                     <- loads config.yaml as CFG dict (single source of truth)
+│   ├── dataset_loader.py             <- loaders for all 4 datasets
+│   ├── preprocessing.py              <- ML mode + BERT mode; English + Russian (Cyrillic-only)
+│   ├── label_mapping.py              <- encode labels as integers
+│   ├── models_ml.py                  <- TF-IDF + LR, SVM, RF pipelines (reads from config.yaml)
+│   ├── models_dl.py                  <- LSTM, BiLSTM, GRU (PyTorch; reads from config.yaml)
+│   ├── models_transformer.py         <- BERT / mBERT / XLM-R (HuggingFace; reads from config.yaml)
+│   ├── evaluation.py                 <- metrics, confusion matrix, result saving, McNemar test
+│   └── utils.py                      <- stratified_split(), preprocess_series(), preprocess_split()
 ├── scripts/
-│   ├── train.py                      ← unified CLI training script
-│   └── zero_shot_transfer.py         ← zero-shot cross-lingual experiment (EN→RU)
+│   ├── train.py                      <- unified CLI training script
+│   └── zero_shot_transfer.py         <- zero-shot cross-lingual experiment (EN->RU)
 ├── notebooks/
-│   ├── 01_eda.ipynb                  ← EDA for all 4 datasets incl. Russian VK
-│   ├── 02_ml_results.ipynb           ← classical ML results + LIME + error analysis
-│   ├── 03_dl_results.ipynb           ← deep learning results + training dynamics
-│   ├── 04_bert_results.ipynb         ← BERT results + cross-model comparison
-│   ├── 05_multilingual_results.ipynb ← Russian VK + zero-shot cross-lingual analysis
-│   └── 06_explainability.ipynb       ← LIME, SHAP, attention visualisation
+│   ├── 01_eda.ipynb                  <- EDA for all 4 datasets incl. Russian VK
+│   ├── 02_ml_results.ipynb           <- classical ML results + LIME + McNemar tests + ablation
+│   ├── 03_dl_results.ipynb           <- deep learning results + training dynamics
+│   ├── 04_bert_results.ipynb         <- BERT results + cross-model comparison
+│   ├── 05_multilingual_results.ipynb <- Russian VK + zero-shot cross-lingual analysis
+│   └── 06_explainability.ipynb       <- LIME, SHAP, attention visualisation
 ├── results/
-│   ├── metrics/                      ← JSON result files (one per experiment)
-│   ├── models/                       ← transformer checkpoints (not tracked by Git)
-│   └── plots/                        ← all charts and word clouds
+│   ├── metrics/                      <- JSON result files (one per experiment)
+│   ├── models/                       <- transformer checkpoints (not tracked by Git)
+│   └── plots/                        <- all charts and word clouds
+├── config.yaml                       <- ALL hyperparameters: TF-IDF, DL, BERT, CV settings
+├── LITERATURE_REVIEW.md              <- credibility-checked analysis of 8 related papers
 ├── requirements.txt
 ├── .gitignore
 └── README.md
@@ -410,7 +501,7 @@ pip install -r requirements.txt
 #    - Suicide_Ideation_DatasetTwitterbased.csv   (Twitter)
 #    - Suicide_Detection.csv                      (Reddit Binary)
 #    - 500_Reddit_users_posts_labels.csv           (C-SSRS)
-#    - Depressive data.xlsx                        (Russian VK — Mendeley)
+#    - Depressive data.xlsx                        (Russian VK -- Mendeley)
 ```
 
 ### Running Experiments
@@ -422,15 +513,19 @@ python scripts/train.py --dataset reddit      --model all_ml
 python scripts/train.py --dataset cssrs       --model all_ml
 python scripts/train.py --dataset russian_vk  --model all_ml
 
+# Run with 5-fold stratified cross-validation (reports mean +/- std F1)
+python scripts/train.py --dataset twitter     --model all_ml --cv
+python scripts/train.py --dataset reddit      --model all_ml --cv
+
 # Deep Learning (minutes to hours)
 python scripts/train.py --dataset twitter --model bilstm --epochs 5
 python scripts/train.py --dataset reddit  --model gru    --epochs 5
 
-# BERT — English (hours; use caffeinate on Mac to prevent sleep)
+# BERT -- English (hours; use caffeinate on Mac to prevent sleep)
 caffeinate -i python scripts/train.py --dataset twitter --model bert --bert_epochs 3
 caffeinate -i python scripts/train.py --dataset reddit  --model bert --bert_epochs 3 --max_samples 20000
 
-# Multilingual — Russian VK (4–5 hours each on CPU)
+# Multilingual -- Russian VK (4-5 hours each on CPU)
 caffeinate -i python scripts/train.py --dataset russian_vk --model mbert --bert_epochs 3 --max_samples 20000
 caffeinate -i python scripts/train.py --dataset russian_vk --model xlmr  --bert_epochs 3 --max_samples 20000
 
@@ -444,17 +539,20 @@ caffeinate -i python scripts/zero_shot_transfer.py --source reddit --max_samples
 jupyter notebook
 ```
 
-Open notebooks in order: `01_eda` → `02_ml_results` → `03_dl_results` → `04_bert_results` → `05_multilingual_results` → `06_explainability`
+Open notebooks in order: `01_eda` -> `02_ml_results` -> `03_dl_results` -> `04_bert_results` -> `05_multilingual_results` -> `06_explainability`
 
 ---
 
 ## Evaluation Protocol
 
-- All experiments: `random_state=42`, stratified 80/20 train/test split
-- Primary metric: **F1-score (weighted)** — handles class imbalance correctly
-- Additional metrics: accuracy, precision, recall, ROC-AUC (where available)
-- Every experiment saves a JSON file to `results/metrics/{dataset}_{model}.json`
-- Best transformer checkpoint saved to `results/models/{dataset}_{model}/` during training
+- All experiments use `random_state=42` and a stratified 80/20 train/test split
+- **Preprocessing order:** the train/test split is performed **first**, then preprocessing is applied independently to each partition — this design guarantees no vocabulary or statistics from the test set can influence the training pipeline, eliminating any possibility of test-set leakage
+- Primary metric: **F1-score (weighted)** — handles class imbalance correctly across all datasets
+- Additional metrics: accuracy, precision, recall, ROC-AUC (where available); per-class precision and recall are included in every saved result JSON
+- Optional **5-fold stratified cross-validation** is available for classical ML experiments via the `--cv` flag; results are reported as mean ± std F1 across folds
+- **McNemar test** for statistical significance testing between model pairs is available via `src.evaluation.mcnemar_test()` — use this to verify that differences between model F1 scores are not attributable to chance
+- Every experiment saves a JSON file to `results/metrics/{dataset}_{model}.json` containing full per-class metrics
+- Best transformer checkpoint is saved to `results/models/{dataset}_{model}/` during training
 
 ---
 
@@ -462,10 +560,12 @@ Open notebooks in order: `01_eda` → `02_ml_results` → `03_dl_results` → `0
 
 - **Python 3.11** required — PyTorch 2.2.2 is not available for Python 3.12+
 - **NumPy < 2** required — PyTorch 2.2.2 is incompatible with NumPy 2.x
-- **transformers==4.40.0** required — newer versions require torch ≥ 2.4
-- **shap==0.43.0** required — newer versions require numpy ≥ 2
+- **transformers==4.40.0** required — newer versions require torch >= 2.4
+- **shap==0.43.0** required — newer versions require numpy >= 2
 - Mac SSL fix applied in `preprocessing.py` for NLTK downloads (`ssl._create_unverified_context`)
-- Russian preprocessing uses Cyrillic-only filter `[^\u0400-\u04FF\s]` — stripping English and special characters is critical to prevent feature leakage
+- Russian preprocessing uses Cyrillic-only filter `[^\u0400-\u04FF\s]` — stripping English and special characters is critical to prevent feature leakage (see SHAP findings in Notebook 06)
+- **`src/utils.py`** provides centralised `stratified_split()` and `preprocess_split()` utilities; preprocessing is always applied after the split as a methodological guarantee against data leakage, and `preprocess_series()` handles both English and Russian modes transparently
+- **`config.yaml`** centralises all hyperparameters — TF-IDF settings, DL architecture parameters, BERT fine-tuning settings, and CV configuration — in a single file, making experiment reproducibility straightforward
 - Always run scripts from the project root directory (`data/raw/` paths are relative)
 
 ---

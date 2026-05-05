@@ -15,6 +15,15 @@ Why this matters for the thesis:
         Zero-shot  (no Russian at all) → XLM-R F1 = ???
     - The gap between these two numbers quantifies how much Russian training data helps
 
+Preprocessing order
+-------------------
+For the English source: all English data is training data, so preprocessing the
+full English set is fine (there is no English test set in this experiment).
+
+For the Russian target: we take the same 20% split (random_state=42) used in
+the fine-tuned Russian experiments so results are directly comparable.
+Preprocessing is applied only to the Russian test partition.
+
 Run from project root:
     python scripts/zero_shot_transfer.py
     python scripts/zero_shot_transfer.py --source twitter --max_samples 10000
@@ -27,16 +36,14 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import argparse
 import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
 
 from src.dataset_loader import (
     load_reddit_binary, load_twitter, load_russian_vk,
     apply_binary_mapping
 )
-from src.preprocessing import preprocess_dataframe
 from src.models_transformer import run_bert_experiment
 from src.evaluation import evaluate, print_report, save_results
+from src.utils import stratified_split, preprocess_series
 
 
 # ── Data paths ─────────────────────────────────────────────────────────────
@@ -48,12 +55,14 @@ DATA_PATHS = {
 
 
 def load_english_source(source='reddit', max_samples=20000):
-    """
-    Load and preprocess English training data.
+    """Load and preprocess English training data.
 
     source = 'reddit'  — 232k posts (recommended: most similar to VK format)
     source = 'twitter' — 1,785 tweets (short texts)
     source = 'both'    — Reddit + Twitter combined
+
+    All English data is used for training — there is no English test split
+    in the zero-shot experiment, so preprocessing the full English set is fine.
     """
     dfs = []
 
@@ -75,9 +84,7 @@ def load_english_source(source='reddit', max_samples=20000):
         print(f'Subsampled to {max_samples} English training examples.')
 
     # BERT-mode preprocessing: light cleaning, keep punctuation and casing
-    df_clean = preprocess_dataframe(df_all, text_col='text', mode='bert', language='english')
-
-    X = df_clean['text_clean']
+    X = preprocess_series(df_all['text'], mode='bert', language='english')
     y = df_all['binary_label'].reset_index(drop=True)
 
     print(f'\nEnglish training set: {len(X)} samples')
@@ -86,23 +93,21 @@ def load_english_source(source='reddit', max_samples=20000):
 
 
 def load_russian_test():
-    """
-    Load Russian VK as the FULL test set.
+    """Load the Russian VK test partition.
 
-    Important: we use the same 20% stratified split (random_state=42)
-    that was used for the fine-tuned Russian experiments — so results
-    are directly comparable.
+    Uses the same 20% stratified split (random_state=42) as the fine-tuned
+    Russian experiments so results are directly comparable.
+
+    Preprocessing is applied ONLY to the test partition — not to the 80%
+    that is discarded — keeping the pipeline methodologically clean.
     """
     df = load_russian_vk(DATA_PATHS['russian_vk'])
-    df_clean = preprocess_dataframe(df, text_col='text', mode='bert', language='russian')
+    X_raw = df['text'].reset_index(drop=True)
+    y     = df['binary_label'].reset_index(drop=True)
 
-    X = df_clean['text_clean']
-    y = df['binary_label'].reset_index(drop=True)
-
-    # Same split as fine-tuned experiments
-    _, X_test, _, y_test = train_test_split(
-        X, y, test_size=0.2, stratify=y, random_state=42
-    )
+    # Split first, then preprocess only the test half
+    _, X_test_raw, _, y_test = stratified_split(X_raw, y)
+    X_test = preprocess_series(X_test_raw, mode='bert', language='russian')
 
     print(f'\nRussian VK test set: {len(X_test)} samples')
     print(f'Class distribution: {y_test.value_counts().to_dict()}')
@@ -111,8 +116,7 @@ def load_russian_test():
 
 def run_zero_shot(source='reddit', max_samples=20000, epochs=3,
                   batch_size=16, max_len=128):
-    """
-    Full zero-shot transfer pipeline.
+    """Full zero-shot transfer pipeline.
 
     1. Load English training data (Reddit / Twitter / both)
     2. Load Russian VK test set (same split as fine-tuned experiments)

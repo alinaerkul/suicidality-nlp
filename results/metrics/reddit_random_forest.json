@@ -1,10 +1,24 @@
 {
     "dataset": "reddit",
     "model": "random_forest",
-    "accuracy": 0.9084,
-    "precision": 0.9088,
-    "recall": 0.9084,
-    "f1": 0.9083,
-    "f1_macro": 0.9083,
-    "roc_auc": 0.9678
+    "accuracy": 0.9091,
+    "precision": 0.9095,
+    "recall": 0.9091,
+    "f1": 0.9091,
+    "f1_macro": 0.9091,
+    "per_class": {
+        "0": {
+            "precision": 0.9224,
+            "recall": 0.8934,
+            "f1": 0.9077,
+            "support": 23208
+        },
+        "1": {
+            "precision": 0.8966,
+            "recall": 0.9249,
+            "f1": 0.9105,
+            "support": 23207
+        }
+    },
+    "roc_auc": 0.9682
 }

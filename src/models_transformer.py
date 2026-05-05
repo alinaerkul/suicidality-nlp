@@ -31,15 +31,13 @@ from torch.optim import AdamW
 from collections import Counter
 from tqdm import tqdm
 
+from src.config import CFG
+
 SAVED_MODELS_DIR = 'results/models'
 
 # ── Model registry ─────────────────────────────────────────────────────────
-# Maps short model names to HuggingFace model IDs
-MODEL_REGISTRY = {
-    'bert':  'bert-base-uncased',
-    'mbert': 'bert-base-multilingual-cased',
-    'xlmr':  'xlm-roberta-base',
-}
+# Maps short model names to HuggingFace model IDs (sourced from config.yaml)
+MODEL_REGISTRY = CFG['bert']['model_ids']
 
 
 # ── Dataset ────────────────────────────────────────────────────────────────
@@ -148,10 +146,10 @@ def evaluate_epoch(model, loader, device):
 def run_bert_experiment(X_train, X_test, y_train, y_test,
                         dataset_name,
                         model_name='bert',
-                        epochs=3,
-                        batch_size=16,
-                        max_len=128,
-                        lr=2e-5):
+                        epochs=None,
+                        batch_size=None,
+                        max_len=None,
+                        lr=None):
     """
     Full fine-tuning pipeline for BERT on one dataset.
 

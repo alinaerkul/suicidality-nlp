@@ -6,5 +6,19 @@
     "recall": 0.8824,
     "f1": 0.8839,
     "f1_macro": 0.8778,
+    "per_class": {
+        "0": {
+            "precision": 0.9552,
+            "recall": 0.8533,
+            "f1": 0.9014,
+            "support": 225
+        },
+        "1": {
+            "precision": 0.7885,
+            "recall": 0.9318,
+            "f1": 0.8542,
+            "support": 132
+        }
+    },
     "roc_auc": 0.9667
 }

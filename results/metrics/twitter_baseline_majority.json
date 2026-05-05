@@ -1,0 +1,24 @@
+{
+    "dataset": "twitter",
+    "model": "baseline_majority",
+    "accuracy": 0.6303,
+    "precision": 0.3972,
+    "recall": 0.6303,
+    "f1": 0.4873,
+    "f1_macro": 0.3866,
+    "per_class": {
+        "0": {
+            "precision": 0.6303,
+            "recall": 1.0,
+            "f1": 0.7732,
+            "support": 225
+        },
+        "1": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 132
+        }
+    },
+    "roc_auc": 0.5
+}

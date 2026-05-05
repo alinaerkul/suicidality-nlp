@@ -1,0 +1,97 @@
+# config.yaml
+# -----------
+# Centralised hyperparameter configuration for the suicidality-nlp project.
+#
+# All scripts and notebooks should read from this file instead of hardcoding
+# values. This makes ablation studies trivial: change one value here,
+# re-run the relevant script, compare results.
+#
+# Usage in Python:
+#   import yaml
+#   with open('config.yaml') as f:
+#       cfg = yaml.safe_load(f)
+#   max_len = cfg['bert']['max_len']['twitter']
+
+# ── Reproducibility ───────────────────────────────────────────────────────────
+random_state: 42          # fixed seed for all splits, models, and samplers
+test_size: 0.20           # 80 / 20 train-test split
+
+# ── Classical ML (TF-IDF hyperparameters) ────────────────────────────────────
+tfidf:
+  logistic_regression:
+    max_features: 50000
+    ngram_range: [1, 2]
+    sublinear_tf: true
+  svm:
+    max_features: 50000
+    ngram_range: [1, 2]
+    sublinear_tf: true
+  random_forest:
+    max_features: 10000
+    ngram_range: [1, 1]
+    sublinear_tf: true
+
+classifiers:
+  logistic_regression:
+    C: 1.0
+    max_iter: 1000
+    class_weight: balanced
+  svm:
+    C: 1.0
+    max_iter: 2000
+    class_weight: balanced
+  random_forest:
+    n_estimators: 200
+    class_weight: balanced
+
+# ── Deep learning (LSTM / BiLSTM / GRU) ──────────────────────────────────────
+dl:
+  vocab_size: 20000
+  embed_dim: 64
+  hidden_dim: 64
+  num_layers: 1
+  dropout: 0.3
+  learning_rate: 0.0003   # 3e-4
+  batch_size: 32
+  epochs: 5
+  max_len:
+    twitter: 64
+    reddit: 128
+    cssrs: 256
+    russian_vk: 128
+
+# ── Transformer fine-tuning (BERT / mBERT / XLM-R) ───────────────────────────
+bert:
+  learning_rate: 0.00002  # 2e-5
+  warmup_ratio: 0.10       # 10% of total steps used for LR warmup
+  batch_size: 16
+  epochs: 3
+  max_len:
+    twitter: 64
+    reddit: 128
+    cssrs: 256
+    russian_vk: 128
+  model_ids:
+    bert:  bert-base-uncased
+    mbert: bert-base-multilingual-cased
+    xlmr:  xlm-roberta-base
+
+# ── Dataset subsampling ───────────────────────────────────────────────────────
+# Reddit and Russian VK are large; subsampling makes BERT training feasible on CPU.
+# Set to null to use the full dataset.
+max_samples:
+  twitter:    null
+  reddit:     20000
+  cssrs:      null
+  russian_vk: 20000
+
+# ── Cross-validation ──────────────────────────────────────────────────────────
+cv:
+  folds: 5
+  scoring: f1_weighted
+
+# ── Evaluation ───────────────────────────────────────────────────────────────
+evaluation:
+  primary_metric: f1_weighted   # main comparison metric across all experiments
+  secondary_metric: f1_macro    # fairer for imbalanced datasets
+  significance_alpha: 0.05      # McNemar test threshold

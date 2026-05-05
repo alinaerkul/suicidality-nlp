@@ -22,6 +22,8 @@ from sklearn.model_selection import train_test_split
 import re
 from collections import Counter
 
+from src.config import CFG
+
 ''' Что такое Embedding? В Classical ML каждое слово — это отдельная колонка в матрице (sparse). 
 В Deep Learning каждое слово — это плотный вектор из, например, 128 чисел (dense). 
 Слова с похожим значением имеют похожие векторы. Это намного эффективнее для нейронных сетей.'''
@@ -275,14 +277,22 @@ def evaluate_epoch(model, loader, criterion, device):
 
 
 def run_dl_experiment(model_name, X_train, X_test, y_train, y_test,
-                      dataset_name, epochs=10, batch_size=32, max_len=128):
+                      dataset_name, epochs=None, batch_size=None, max_len=None):
     """
     Full training pipeline for one DL model on one dataset.
     """
+    dl_cfg = CFG['dl']
+    if epochs is None:
+        epochs = dl_cfg['epochs']
+    if batch_size is None:
+        batch_size = dl_cfg['batch_size']
+    if max_len is None:
+        max_len = dl_cfg['max_len'].get(dataset_name, 128)
+
     device = get_device()
 
     # Build vocabulary from training data only
-    vocab = Vocabulary(max_vocab=20000)
+    vocab = Vocabulary(max_vocab=dl_cfg['vocab_size'])
     vocab.build(X_train)
 
     # Create datasets and loaders
@@ -294,26 +304,21 @@ def run_dl_experiment(model_name, X_train, X_test, y_train, y_test,
     test_loader  = DataLoader(test_dataset,  batch_size=batch_size,
                               shuffle=False)
 
-    # Initialise model — smaller architecture for small datasets
+    # Initialise model
     vocab_size = len(vocab.word2idx)
+    model_kwargs = dict(
+        vocab_size=vocab_size,
+        embed_dim=dl_cfg['embed_dim'],
+        hidden_dim=dl_cfg['hidden_dim'],
+        num_layers=dl_cfg['num_layers'],
+        dropout=dl_cfg['dropout'],
+    )
     if model_name == 'lstm':
-        model = LSTMClassifier(vocab_size,
-                               embed_dim=64,
-                               hidden_dim=64,
-                               num_layers=1,
-                               dropout=0.3).to(device)
+        model = LSTMClassifier(**model_kwargs).to(device)
     elif model_name == 'bilstm':
-        model = BiLSTMClassifier(vocab_size,
-                                 embed_dim=64,
-                                 hidden_dim=64,
-                                 num_layers=1,
-                                 dropout=0.3).to(device)
+        model = BiLSTMClassifier(**model_kwargs).to(device)
     elif model_name == 'gru':
-        model = GRUClassifier(vocab_size,
-                              embed_dim=64,
-                              hidden_dim=64,
-                              num_layers=1,
-                              dropout=0.3).to(device)
+        model = GRUClassifier(**model_kwargs).to(device)
     else:
         raise ValueError(f'Unknown model: {model_name}')
 
@@ -327,8 +332,7 @@ def run_dl_experiment(model_name, X_train, X_test, y_train, y_test,
     ], dtype=torch.float).to(device)
     criterion = nn.CrossEntropyLoss(weight=weights)
 
-    # Adam with lower learning rate
-    optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
+    optimizer = torch.optim.Adam(model.parameters(), lr=dl_cfg['learning_rate'])
 
     # Learning rate scheduler — уменьшает lr если модель не улучшается
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
