@@ -18,3 +18,18 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# Internal notes and meeting prep (local only)
+CLAUDE.md
+LITERATURE_REVIEW.md
+SCRIPT.md
+SCRIPT.html
+PRESENTATION.html
+PRESENTATION_GUIDE.md
+CHEATSHEET.md
+CHEATSHEET.html
+SUPERVISOR_REPORT.md
+SUPERVISOR_REPORT.html
+
+# IDE
+.idea/

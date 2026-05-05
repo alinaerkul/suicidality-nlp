@@ -74,8 +74,6 @@ A reproducible, cross-lingual NLP benchmark for detecting suicidality and depres
 
 ## Related Work
 
-A full credibility-checked literature review is in [`LITERATURE_REVIEW.md`](LITERATURE_REVIEW.md).
-
 The table below lists the papers most closely related to this project — either as **dataset sources** (must-cite) or as **methodological comparisons**. All numbers are verified against primary sources.
 
 | Paper | Relation to this project | Dataset | Best reported result |
@@ -477,7 +475,6 @@ suicidality-nlp/
 │   ├── models/                       <- transformer checkpoints (not tracked by Git)
 │   └── plots/                        <- all charts and word clouds
 ├── config.yaml                       <- ALL hyperparameters: TF-IDF, DL, BERT, CV settings
-├── LITERATURE_REVIEW.md              <- credibility-checked analysis of 8 related papers
 ├── requirements.txt
 ├── .gitignore
 └── README.md
