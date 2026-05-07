@@ -15,7 +15,7 @@
 \usepackage{setspace}
 \onehalfspacing
 
-\usepackage{graphicx}
+\usepackage[draft]{graphicx}  % draft = skip loading images → faster compile
 \usepackage{float}
 \usepackage[labelfont=bf, font=small]{caption}
 \usepackage{subcaption}
@@ -24,7 +24,7 @@
 \usepackage{array}
 \usepackage{multirow}
 \usepackage{tabularx}
-\usepackage{longtable}
+% \usepackage{longtable}  % not used in body — disabled for speed
 \usepackage{xcolor}
 \usepackage{colortbl}
 
@@ -39,8 +39,7 @@
     pdfauthor={Alina Erkulova}
 }
 
-\usepackage[style=apa, backend=biber]{biblatex}
-\addbibresource{references.bib}
+\usepackage[numbers, sort&compress]{natbib}  % faster than biblatex+biber
 
 \usepackage{fancyhdr}
 \pagestyle{fancy}
@@ -55,7 +54,7 @@
   {\normalfont\Large\bfseries}{\chaptertitlename\ \thechapter}{12pt}{\Huge}
 \titlespacing*{\chapter}{0pt}{0pt}{20pt}
 
-\usepackage{csquotes}
+% \usepackage{csquotes}  % only needed by biblatex — removed
 \usepackage{enumitem}
 \usepackage{tcolorbox}
 \tcbuselibrary{skins, breakable}
@@ -125,7 +124,7 @@ Alina Erkulova
 
 This thesis presents a reproducible, cross-lingual benchmark for detecting suicidality and depression from social media text. Nine models across three families — classical machine learning (Logistic Regression, SVM, Random Forest), deep learning (LSTM, BiLSTM, GRU), and pre-trained transformers (BERT, mBERT, XLM-RoBERTa) — are evaluated on four datasets: three English-language social media corpora (Twitter, Reddit Suicide Watch, and the clinical C-SSRS Reddit dataset) and one Russian-language corpus (Mendeley VK Depressive Posts). All experiments are conducted under identical evaluation conditions to enable fair cross-model and cross-dataset comparison.
 
-The novel contributions of this work include two cross-lingual transfer experiments. First, a \textbf{zero-shot transfer experiment}: both XLM-RoBERTa (F1=0.788) and mBERT (F1=0.877) are trained exclusively on English Reddit data and evaluated on Russian VK posts without any Russian training data. Unexpectedly, mBERT outperforms the larger XLM-R model in this setting — a finding explained by vocabulary overlap between mBERT's shared WordPiece subwords and Russian Cyrillic. Second, a \textbf{few-shot learning curve experiment} demonstrates that adding as few as 100 Russian examples to the zero-shot model closes 84\% of the gap to fully-supervised performance (F1: 0.788 $\rightarrow$ 0.964), showing that Russian annotation effort is highly efficient. Both results are compared to \textcite{raihan2025} who evaluate GPT-4 zero-shot CoT on the same Russian VK dataset (F1=0.87) — our fully fine-tuned XLM-R (F1=0.994) outperforms it substantially.
+The novel contributions of this work include two cross-lingual transfer experiments. First, a \textbf{zero-shot transfer experiment}: both XLM-RoBERTa (F1=0.788) and mBERT (F1=0.877) are trained exclusively on English Reddit data and evaluated on Russian VK posts without any Russian training data. Unexpectedly, mBERT outperforms the larger XLM-R model in this setting — a finding explained by vocabulary overlap between mBERT's shared WordPiece subwords and Russian Cyrillic. Second, a \textbf{few-shot learning curve experiment} demonstrates that adding as few as 100 Russian examples to the zero-shot model closes 84\% of the gap to fully-supervised performance (F1: 0.788 $\rightarrow$ 0.964), showing that Russian annotation effort is highly efficient. Both results are compared to \citet{raihan2025} who evaluate GPT-4 zero-shot CoT on the same Russian VK dataset (F1=0.87) — our fully fine-tuned XLM-R (F1=0.994) outperforms it substantially.
 
 Explainable AI methods — LIME, SHAP, and transformer attention visualisation — are applied to both English and Russian models. SHAP analysis revealed a critical preprocessing flaw (English vocabulary leaking into Russian TF-IDF features) and two dataset scraping artifacts (geographic and temporal bias), illustrating the value of explainability as a debugging tool in high-stakes NLP applications.
 
@@ -158,9 +157,9 @@ I also acknowledge the creators of the datasets used in this work: the Mendeley 
 
 \section{Motivation}
 
-Mental health crises, including suicidal ideation and clinical depression, represent a significant global public health burden. The World Health Organisation estimates that over 700,000 people die by suicide annually, and depression affects more than 280 million individuals worldwide \parencite{who2023}. Early detection and intervention are critical to reducing these numbers, yet access to mental health services remains limited in many regions.
+Mental health crises, including suicidal ideation and clinical depression, represent a significant global public health burden. The World Health Organisation estimates that over 700,000 people die by suicide annually, and depression affects more than 280 million individuals worldwide \citep{who2023}. Early detection and intervention are critical to reducing these numbers, yet access to mental health services remains limited in many regions.
 
-Social media platforms have emerged as a space where individuals with mental health difficulties frequently express distress — often more openly than in face-to-face clinical settings \parencite{de2014mental}. This creates an opportunity for computational systems to support early identification of at-risk individuals. However, building such systems poses unique technical and ethical challenges: the language of distress is nuanced, context-dependent, and varies across cultures and languages.
+Social media platforms have emerged as a space where individuals with mental health difficulties frequently express distress — often more openly than in face-to-face clinical settings \citep{de2014mental}. This creates an opportunity for computational systems to support early identification of at-risk individuals. However, building such systems poses unique technical and ethical challenges: the language of distress is nuanced, context-dependent, and varies across cultures and languages.
 
 This thesis addresses the problem of automated suicidality and depression detection from social media text, with a particular focus on \textbf{cross-lingual generalisation}: can a model trained on English data detect depression in Russian?
 
@@ -186,7 +185,7 @@ The primary contributions of this thesis are:
     \item A \textbf{reproducible benchmark} comparing nine NLP models across four datasets under identical conditions.
     \item A \textbf{zero-shot cross-lingual transfer experiment} (English $\rightarrow$ Russian) comparing both XLM-RoBERTa (F1=0.788) and mBERT (F1=0.877) with no Russian training data — and showing mBERT outperforms XLM-R in this specific setting.
     \item A \textbf{few-shot learning curve} on Russian VK, demonstrating that 100 Russian examples close 84\% of the zero-shot performance gap, making Russian annotation highly cost-effective.
-    \item A \textbf{comparison with recent LLM baselines}: our fine-tuned XLM-R (F1=0.994) outperforms GPT-4 zero-shot CoT (F1=0.87) on the same Russian VK dataset \parencite{raihan2025}, providing direct evidence that fine-tuned smaller models still beat LLMs on this task.
+    \item A \textbf{comparison with recent LLM baselines}: our fine-tuned XLM-R (F1=0.994) outperforms GPT-4 zero-shot CoT (F1=0.87) on the same Russian VK dataset \citep{raihan2025}, providing direct evidence that fine-tuned smaller models still beat LLMs on this task.
     \item \textbf{Explainability analysis} in two languages using LIME, SHAP, and attention visualisation, including the discovery and correction of a preprocessing flaw and two dataset scraping artifacts.
     \item A \textbf{Russian-language evaluation} of the full model stack on the Mendeley VK Depressive Posts dataset, with results that — to the best of our knowledge — represent the first published transformer benchmark on this corpus.
 \end{itemize}
@@ -202,23 +201,23 @@ Chapter~\ref{ch:related} reviews related work in mental health NLP and cross-lin
 
 \section{Mental Health NLP}
 
-Automated detection of mental health conditions from text has attracted growing research interest over the past decade. Early work focused on keyword-based and lexicon-driven approaches, using suicide-related word lists derived from clinical research \parencite{pestian2012sentiment}. These methods, while interpretable, failed to capture the contextual nature of distress expression.
+Automated detection of mental health conditions from text has attracted growing research interest over the past decade. Early work focused on keyword-based and lexicon-driven approaches, using suicide-related word lists derived from clinical research \citep{pestian2012sentiment}. These methods, while interpretable, failed to capture the contextual nature of distress expression.
 
-Machine learning approaches using TF-IDF representations and classifiers such as SVM showed substantial improvements over lexicon-based methods \parencite{coppersmith2014quantifying}. The introduction of word embeddings (Word2Vec, GloVe) enabled recurrent neural networks to model sequential context, improving performance on longer posts but degrading on short social media texts \parencite{yates2017depression}.
+Machine learning approaches using TF-IDF representations and classifiers such as SVM showed substantial improvements over lexicon-based methods \citep{coppersmith2014quantifying}. The introduction of word embeddings (Word2Vec, GloVe) enabled recurrent neural networks to model sequential context, improving performance on longer posts but degrading on short social media texts \citep{yates2017depression}.
 
-The advent of pre-trained transformer models, particularly BERT \parencite{devlin2019bert}, marked a paradigm shift. Fine-tuned BERT consistently outperforms earlier approaches on clinical and social media mental health benchmarks \parencite{ji2022survey}. However, most existing benchmarks are English-only, leaving the multilingual dimension underexplored.
+The advent of pre-trained transformer models, particularly BERT \citep{devlin2019bert}, marked a paradigm shift. Fine-tuned BERT consistently outperforms earlier approaches on clinical and social media mental health benchmarks \citep{ji2022survey}. However, most existing benchmarks are English-only, leaving the multilingual dimension underexplored.
 
 \section{Cross-Lingual Transfer for Mental Health}
 
-Cross-lingual NLP has advanced considerably with the development of multilingual pre-trained models. mBERT \parencite{devlin2019bert} demonstrated that a single transformer trained on 104 languages shows surprising zero-shot transfer capabilities. XLM-RoBERTa \parencite{conneau2020unsupervised}, trained on 2.5TB of filtered Common Crawl data in 100 languages, substantially improves on mBERT for low-resource and cross-lingual tasks.
+Cross-lingual NLP has advanced considerably with the development of multilingual pre-trained models. mBERT \citep{devlin2019bert} demonstrated that a single transformer trained on 104 languages shows surprising zero-shot transfer capabilities. XLM-RoBERTa \citep{conneau2020unsupervised}, trained on 2.5TB of filtered Common Crawl data in 100 languages, substantially improves on mBERT for low-resource and cross-lingual tasks.
 
-Zero-shot cross-lingual transfer for mental health classification remains a relatively unexplored research direction. \textcite{Ansari2021} showed that XLM-R achieves competitive results for multilingual hate speech detection in a zero-shot setting, suggesting that the approach can generalise to subjective, emotionally-charged language classification tasks. To the best of the author's knowledge, no prior work has applied zero-shot cross-lingual transfer specifically to Russian-language suicidality or depression detection.
+Zero-shot cross-lingual transfer for mental health classification remains a relatively unexplored research direction. \citet{Ansari2021} showed that XLM-R achieves competitive results for multilingual hate speech detection in a zero-shot setting, suggesting that the approach can generalise to subjective, emotionally-charged language classification tasks. To the best of the author's knowledge, no prior work has applied zero-shot cross-lingual transfer specifically to Russian-language suicidality or depression detection.
 
 \section{Explainability in Mental Health NLP}
 
-The high stakes of mental health applications demand model transparency. LIME \parencite{ribeiro2016should} provides local, model-agnostic explanations by perturbing input features and observing changes in predictions. SHAP \parencite{lundberg2017unified} extends the game-theoretic Shapley value concept to provide both local and global explanations with desirable consistency properties.
+The high stakes of mental health applications demand model transparency. LIME \citep{ribeiro2016should} provides local, model-agnostic explanations by perturbing input features and observing changes in predictions. SHAP \citep{lundberg2017unified} extends the game-theoretic Shapley value concept to provide both local and global explanations with desirable consistency properties.
 
-Attention-based explanations offer an architecture-internal perspective \parencite{clark2019does}, though their reliability as faithfulness proxies is debated \parencite{jain2019attention}. In this thesis, all three methods are applied to cross-validate findings across English and Russian models.
+Attention-based explanations offer an architecture-internal perspective \citep{clark2019does}, though their reliability as faithfulness proxies is debated \citep{jain2019attention}. In this thesis, all three methods are applied to cross-validate findings across English and Russian models.
 
 %=============================================================
 \chapter{Datasets}
@@ -301,7 +300,7 @@ Reddit is the ideal benchmark dataset in many ways — 232,000 posts, perfect 50
 \label{fig:cssrs_eda}
 \end{figure}
 
-C-SSRS is by far the hardest dataset in this benchmark — 500 samples total, with only around 9\% belonging to the positive class. The long texts actually contain rich clinical language, but the data scarcity means most models struggle to generalise. It is worth noting that the original C-SSRS annotation scheme used five classes \parencite{gaur2019knowledge}; I collapsed them into binary for comparability with the other datasets. This means the minority class here captures a range of severity levels (ideation, behaviour, attempt) and is not necessarily coherent as a single category.
+C-SSRS is by far the hardest dataset in this benchmark — 500 samples total, with only around 9\% belonging to the positive class. The long texts actually contain rich clinical language, but the data scarcity means most models struggle to generalise. It is worth noting that the original C-SSRS annotation scheme used five classes \citep{gaur2019knowledge}; I collapsed them into binary for comparability with the other datasets. This means the minority class here captures a range of severity levels (ideation, behaviour, attempt) and is not necessarily coherent as a single category.
 
 \begin{figure}[H]
 \centering
@@ -633,7 +632,7 @@ Random baseline  & ---             & ---            & 0.50   & ---  & ---  \\
 \end{tabular}
 \end{table}
 
-The mBERT result was one of the more surprising findings in this project. I expected XLM-R to dominate — it is a larger model trained on more data with a better pre-training objective. But in the zero-shot setting, mBERT (F1=0.877) outperforms XLM-R (F1=0.788) by a meaningful margin. The most likely explanation is vocabulary overlap: mBERT uses a shared WordPiece vocabulary across all 104 languages, which means Russian Cyrillic subwords appear directly in the vocabulary alongside English tokens. XLM-R uses a SentencePiece vocabulary that is more language-specific and separates the Russian and English vocabularies more cleanly — which helps for within-language tasks but can hurt zero-shot transfer when source and target languages use different scripts. This non-monotonic relationship between model capacity and zero-shot performance is discussed by \textcite{conneau2020unsupervised}.
+The mBERT result was one of the more surprising findings in this project. I expected XLM-R to dominate — it is a larger model trained on more data with a better pre-training objective. But in the zero-shot setting, mBERT (F1=0.877) outperforms XLM-R (F1=0.788) by a meaningful margin. The most likely explanation is vocabulary overlap: mBERT uses a shared WordPiece vocabulary across all 104 languages, which means Russian Cyrillic subwords appear directly in the vocabulary alongside English tokens. XLM-R uses a SentencePiece vocabulary that is more language-specific and separates the Russian and English vocabularies more cleanly — which helps for within-language tasks but can hurt zero-shot transfer when source and target languages use different scripts. This non-monotonic relationship between model capacity and zero-shot performance is discussed by \citet{conneau2020unsupervised}.
 
 \begin{figure}[H]
 \centering
@@ -684,24 +683,24 @@ $\approx$51,000 (full set)      & 0.9942 & 100\% \\
 \end{tabular}
 \end{table}
 
-The few-shot curve shows a strikingly fast recovery. With just 100 Russian examples (50 depressive, 50 non-depressive), F1 jumps from 0.788 to 0.964 — that is 84\% of the gap to fully supervised performance, closed with minimal annotation effort. By 1,000 examples, the model is within 0.01 F1 of the ceiling. The curve is heavily front-loaded: the first 100 examples provide far more gain per sample than the remaining 50,000. This diminishing returns pattern is consistent with typical learning curves for fine-tuned transformers \parencite{devlin2019bert}.
+The few-shot curve shows a strikingly fast recovery. With just 100 Russian examples (50 depressive, 50 non-depressive), F1 jumps from 0.788 to 0.964 — that is 84\% of the gap to fully supervised performance, closed with minimal annotation effort. By 1,000 examples, the model is within 0.01 F1 of the ceiling. The curve is heavily front-loaded: the first 100 examples provide far more gain per sample than the remaining 50,000. This diminishing returns pattern is consistent with typical learning curves for fine-tuned transformers \citep{devlin2019bert}.
 
 The practical implication is clear: if you need Russian-language depression detection and cannot afford to annotate 50,000 posts, annotating 500--1,000 examples gives you 90--95\% of the performance you could ever achieve. This makes XLM-R an extremely cost-effective choice for adapting to new languages.
 
 \section{Comparison with LLM Baselines}
 
-\textcite{raihan2025} evaluate several large language models including GPT-4 with chain-of-thought prompting on the same Mendeley VK Depressive Posts dataset used in this thesis. Table~\ref{tab:raihan} places their results alongside ours, enabling direct comparison.
+\citet{raihan2025} evaluate several large language models including GPT-4 with chain-of-thought prompting on the same Mendeley VK Depressive Posts dataset used in this thesis. Table~\ref{tab:raihan} places their results alongside ours, enabling direct comparison.
 
 \begin{table}[H]
 \centering
-\caption{Comparison with \textcite{raihan2025} on the Russian VK dataset. Their GPT-4 zero-shot CoT result is the closest external baseline to our zero-shot setting.}
+\caption{Comparison with \citet{raihan2025} on the Russian VK dataset. Their GPT-4 zero-shot CoT result is the closest external baseline to our zero-shot setting.}
 \label{tab:raihan}
 \begin{tabular}{llc}
 \toprule
 \textbf{Model} & \textbf{Setting} & \textbf{F1} \\
 \midrule
-GPT-4 zero-shot CoT \parencite{raihan2025} & Zero-shot & 0.87 \\
-DeepSeek R1-14B \parencite{raihan2025}     & Zero-shot & 0.79 \\
+GPT-4 zero-shot CoT \citep{raihan2025} & Zero-shot & 0.87 \\
+DeepSeek R1-14B \citep{raihan2025}     & Zero-shot & 0.79 \\
 \midrule
 mBERT (this work)   & Zero-shot (EN $\rightarrow$ RU)  & \textbf{0.877} \\
 XLM-R (this work)   & Zero-shot (EN $\rightarrow$ RU)  & 0.788 \\
@@ -711,7 +710,7 @@ XLM-R (this work)   & Fine-tuned ($\approx$51k)        & \textbf{0.994} \\
 \end{tabular}
 \end{table}
 
-A few things stand out from this comparison. First, our zero-shot mBERT (0.877) matches GPT-4 zero-shot CoT (0.87) despite being a much smaller model with far lower inference cost. This is somewhat surprising but consistent with the broader finding from \textcite{yang2024mentallama} that fine-tuned smaller models often match or beat LLMs on classification tasks. Second, our fine-tuned XLM-R (0.994) outperforms every LLM baseline by over 12 F1 points. Third, the XLM-R zero-shot (0.788) is roughly level with DeepSeek R1-14B (0.79), suggesting these are the weaker models in both paradigms. The overall picture reinforces a key message from the literature: for structured classification tasks with available training data, fine-tuned encoders remain the most efficient approach.
+A few things stand out from this comparison. First, our zero-shot mBERT (0.877) matches GPT-4 zero-shot CoT (0.87) despite being a much smaller model with far lower inference cost. This is somewhat surprising but consistent with the broader finding from \citet{yang2024mentallama} that fine-tuned smaller models often match or beat LLMs on classification tasks. Second, our fine-tuned XLM-R (0.994) outperforms every LLM baseline by over 12 F1 points. Third, the XLM-R zero-shot (0.788) is roughly level with DeepSeek R1-14B (0.79), suggesting these are the weaker models in both paradigms. The overall picture reinforces a key message from the literature: for structured classification tasks with available training data, fine-tuned encoders remain the most efficient approach.
 
 \section{Full Benchmark Heatmap}
 
@@ -739,7 +738,7 @@ Adding just 100 Russian examples to the zero-shot XLM-R model raises F1 from 0.7
 \end{findingbox}
 
 \begin{findingbox}[title={Finding 4 — Fine-tuned XLM-R beats GPT-4 by 12 F1 points}]
-Our fine-tuned XLM-R (F1=0.994) outperforms GPT-4 zero-shot CoT (F1=0.87) \parencite{raihan2025} on the same Russian VK dataset. For labelled classification tasks, fine-tuning a smaller model remains more effective than prompting a large language model.
+Our fine-tuned XLM-R (F1=0.994) outperforms GPT-4 zero-shot CoT (F1=0.87) \citep{raihan2025} on the same Russian VK dataset. For labelled classification tasks, fine-tuning a smaller model remains more effective than prompting a large language model.
 \end{findingbox}
 
 \begin{findingbox}[title={Finding 5 — SVM beats transformers on Russian VK (fine-tuned)}]
@@ -760,7 +759,7 @@ LinearSVC (F1=0.9948) $>$ XLM-R (F1=0.9942) when both are trained on Russian. St
 \label{fig:shap_twitter}
 \end{figure}
 
-The Twitter SHAP plot confirms that the English model is learning genuinely meaningful signals. Words like \textit{kill}, \textit{pain}, \textit{forever}, \textit{sleep} as the top positive predictors match what clinical psychology literature identifies as markers of suicidal ideation — temporal finality, hopelessness, and explicit self-harm vocabulary \parencite{pestian2012sentiment}. The fact that three independent methods (LIME, SHAP, and attention) all highlight the same semantic cluster gives confidence that the model is not learning superficial patterns.
+The Twitter SHAP plot confirms that the English model is learning genuinely meaningful signals. Words like \textit{kill}, \textit{pain}, \textit{forever}, \textit{sleep} as the top positive predictors match what clinical psychology literature identifies as markers of suicidal ideation — temporal finality, hopelessness, and explicit self-harm vocabulary \citep{pestian2012sentiment}. The fact that three independent methods (LIME, SHAP, and attention) all highlight the same semantic cluster gives confidence that the model is not learning superficial patterns.
 
 \section{SHAP Analysis — Russian VK and Artifact Discovery}
 \label{sec:shap_artifacts}
@@ -876,7 +875,9 @@ This thesis presented a reproducible, cross-lingual NLP benchmark for suicidalit
 Future work should explore threshold calibration and weighted loss training to address the zero-shot XLM-R recall gap (Recall=0.64 for the depressive class), cross-regional and cross-temporal validation to assess generalisation beyond the known scraping artifacts in the Russian VK dataset, and extension of the few-shot curve to include mBERT as a comparison point. Adding the N=5,000 few-shot data point and testing few-shot mBERT against few-shot XLM-R would further clarify when the vocabulary overlap advantage disappears as more Russian data becomes available.
 
 %=============================================================
-\printbibliography[heading=bibintoc, title={References}]
+\bibliographystyle{plainnat}
+\bibliography{references}
+\addcontentsline{toc}{chapter}{References}
 
 %=============================================================
 \appendix
