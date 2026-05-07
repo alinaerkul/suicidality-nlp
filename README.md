@@ -123,17 +123,27 @@ SHAP analysis (Notebook 06) revealed that *'Kazakhstan'* (country name) and *'Ap
 **Text Length Distribution — All 4 Datasets**
 ![Text Length Comparison](results/plots/04_text_length_comparison.png)
 
+The most striking thing about this plot is just how different the four datasets are in terms of text length. Twitter posts are very short (median ~85 characters), while C-SSRS posts can be thousands of characters long — a 40× difference. Russian VK sits closer to Twitter at around 250 characters. This matters a lot for model choice: short texts tend to have explicit keywords that TF-IDF can pick up easily, while long texts require contextual understanding. It also partly explains why C-SSRS is the hardest dataset — the signal is spread across long, complex clinical narratives rather than concentrated in a few keywords.
+
 **Twitter EDA — Class Distribution, Text Length, Word Clouds**
 ![Twitter EDA](results/plots/01_twitter_eda.png)
+
+The Twitter word clouds show a clear separation between classes — suicidal posts contain words like *die*, *kill*, *tired*, *forever*, which barely appear in non-suicidal posts. This kind of lexical separability is exactly what makes TF-IDF models work well here. The class distribution is somewhat imbalanced (63% non-suicidal), which is why class weighting is needed — without it, a naive classifier would just predict the majority class.
 
 **Reddit Binary EDA**
 ![Reddit EDA](results/plots/02_reddit_binary_eda.png)
 
+Reddit is the largest and most balanced dataset (50/50 split, 232k posts). The word clouds here show more overlap between classes compared to Twitter — both classes share a lot of everyday language, which makes Reddit a harder classification problem than it first appears. The large size compensates for this, giving all model families enough data to learn from.
+
 **C-SSRS EDA**
 ![C-SSRS EDA](results/plots/03_cssrs_eda.png)
 
+C-SSRS is the most challenging dataset in the benchmark. The original labels have 5 classes (ranging from suicidal ideation to attempt), which I collapsed to binary for this project. The class distribution is highly imbalanced, and with only 500 posts total, there are as few as 45 examples in some subcategories. This explains why all models struggle here — there simply is not enough data to learn reliable patterns.
+
 **Russian VK EDA**
 ![Russian VK EDA](results/plots/05_russian_vk_eda.png)
+
+The Russian VK dataset is large (64k posts) and perfectly balanced. The word cloud for depressive posts shows emotionally heavy Russian vocabulary related to loneliness, pain, and hopelessness. One thing worth noting is that some high-frequency terms in the depressive class turned out to be scraping artifacts rather than genuine psychological signals — this is discussed in more detail in Notebook 06.
 
 ---
 
@@ -167,29 +177,47 @@ SVM ROC-AUC is computed from decision function scores (raw margin values) rather
 **F1 Score Comparison — All Classical ML Models**
 ![ML F1 Comparison](results/plots/ml_f1_comparison.png)
 
+This chart shows that no single model dominates across all datasets. Random Forest wins on Twitter, Logistic Regression on Reddit, and SVM on C-SSRS. The more important takeaway is the gap between datasets: all three models score around 0.93–0.94 on Reddit but only 0.63–0.73 on C-SSRS. That 0.21-point difference between datasets is much larger than any difference between models on the same dataset. In other words, choosing the right dataset matters more than choosing the right model.
+
 **Results Heatmap — F1 and Accuracy**
 ![ML Heatmap](results/plots/ml_heatmap.png)
+
+The heatmap makes the dataset difficulty differences very visible — the C-SSRS column is noticeably lighter than the others. It also confirms that SVM is the most consistently strong model, never performing badly on any dataset while other models have clear weak spots (e.g. Random Forest dropping on Reddit). For a project that needs reliable performance across multiple domains, SVM is the safest classical ML choice.
 
 **Confusion Matrices — Twitter**
 ![Confusion Matrix Twitter](results/plots/cm_twitter.png)
 
+Twitter confusion matrices show mostly correct predictions with few errors. The misclassified cases are roughly symmetric between false positives and false negatives, which is good — it means the model is not systematically biased toward one class. Given the stakes of missing a suicidal post, a deployment scenario would want to adjust the threshold to prioritise recall over precision.
+
 **Confusion Matrix — Reddit**
 ![Confusion Matrix Reddit](results/plots/cm_reddit.png)
+
+Reddit has the cleanest confusion matrix of all English datasets, which makes sense given the large and balanced training set. The model makes very few errors here. The main takeaway is that with enough balanced data, even a classical TF-IDF model can achieve near-transformer performance.
 
 **Confusion Matrix — C-SSRS**
 ![Confusion Matrix C-SSRS](results/plots/cm_cssrs.png)
 
+C-SSRS shows a noticeably messier pattern — more misclassifications in both directions. This is expected given only 400 training examples. The errors are not random though; the model tends to be cautious and over-predict the suicidal class, which is actually the safer failure mode in a clinical context.
+
 **LIME — Suicidal Post (Twitter)**
 ![LIME Suicidal Twitter](results/plots/lime_suicidal_example.png)
+
+LIME shows that the Twitter SVM correctly activates on words like *forever*, *sleep*, *tired* for this suicidal post — these capture the indirect, euphemistic language common in suicidal communication ("sleep forever", "tired of everything"). The model is not just pattern-matching on obvious words like "suicide"; it has picked up on softer signals that a keyword list would miss entirely.
 
 **LIME — Non-Suicidal Post (Twitter)**
 ![LIME Non-Suicidal Twitter](results/plots/lime_non_suicidal_example.png)
 
-**LIME — C-SSRS Suicidal (wrong prediction — model has no signal)**
+For the non-suicidal example, LIME shows that the model correctly identifies contextual cues — conversational tone, positive sentiment words, absence of finality markers — as evidence against suicidality. This confirms the model is making meaningful distinctions rather than just reacting to surface-level features.
+
+**LIME — C-SSRS Suicidal (wrong prediction)**
 ![LIME C-SSRS Suicidal](results/plots/lime_cssrs_suicidal.png)
+
+This is one of the most informative failure cases in the whole project. LIME weights for this C-SSRS prediction are tiny — the model is essentially guessing, and it gets it wrong. The features it relies on are not clinically meaningful. This is strong evidence that the model has not learned anything useful on C-SSRS; it is just memorising surface patterns from an insufficient training set.
 
 **LIME — C-SSRS Non-Suicidal (wrong prediction)**
 ![LIME C-SSRS Non-Suicidal](results/plots/lime_cssrs_non_suicidal.png)
+
+Same story here — another wrong prediction with very low LIME confidence. Together these two examples make a clear point: a model with F1=0.73 on C-SSRS should not be trusted for individual-level clinical decisions. Population-level trends might still be meaningful, but single-prediction reliability is low.
 
 ---
 
@@ -217,14 +245,22 @@ The performance jump from Twitter/C-SSRS (small) to Reddit (large) is near-binar
 **Classical ML vs Deep Learning — F1 Comparison per Dataset**
 ![ML vs DL Comparison](results/plots/ml_vs_dl_comparison.png)
 
+This comparison is probably the most counterintuitive result in the whole benchmark — classical ML beats deep learning on two out of three datasets. The only place DL wins is Reddit, where 232k posts give the models enough data to learn word embeddings from scratch. On Twitter and C-SSRS, TF-IDF + SVM is substantially better. The lesson here is that deep learning is not universally superior; data size is the deciding factor.
+
 **All Models Heatmap (ML + DL)**
 ![All Models Heatmap](results/plots/all_models_heatmap.png)
+
+Adding DL to the heatmap makes the Twitter collapse problem very visible — LSTM and GRU show near-zero performance there compared to the rest of the matrix. BiLSTM is the exception, managing to stay competitive even with limited data. The heatmap also reinforces that C-SSRS is consistently the weakest column regardless of model family.
 
 **Training Dynamics — Validation Accuracy per Epoch**
 ![DL Training Dynamics](results/plots/dl_training_dynamics.png)
 
+The training curves tell a clear story about data requirements. On Reddit, all three models converge smoothly and steadily over 5 epochs. On C-SSRS, the curves oscillate with no clear trend — the model is basically thrashing because 400 training examples produce too much noise per gradient update. This is a good reminder that training loss going down does not mean the model is learning something useful.
+
 **Twitter DL Collapse Analysis**
 ![Twitter DL Collapse](results/plots/twitter_dl_collapse.png)
+
+This plot shows LSTM and GRU predicting only one class throughout training on Twitter — they never learn to identify the suicidal class at all. The confusion matrices confirm it: all predictions land in a single column. BiLSTM avoids this, which I think is because the bidirectional architecture provides a stronger gradient signal per example. With only 1,428 training examples, every gradient update has to count.
 
 ---
 
@@ -252,11 +288,17 @@ Despite training on less than 9% of available Reddit data (20k/232k) for a singl
 **BERT vs All Models per Dataset**
 ![BERT vs All Models](results/plots/bert_vs_all_models.png)
 
+BERT comes out on top on Twitter and Reddit, but the improvement over SVM is relatively modest — a few percentage points rather than a large gap. The more interesting result is on C-SSRS, where SVM actually beats BERT. This is not what most people would expect, and it suggests that pre-training alone cannot compensate for having only 400 training examples when the model has 110 million parameters to tune. The benefit of pre-training is real, but it has limits.
+
 **Full Heatmap — All Models including BERT**
 ![Final Heatmap All Models](results/plots/final_heatmap_all_models.png)
 
+With all three model families in one heatmap, the overall picture becomes clear. BERT is the best single model for English, but the margin over SVM is small on most datasets. C-SSRS remains the hardest column. The heatmap also makes it easy to spot the DL collapse on Twitter — the LSTM and GRU rows are noticeably darker there.
+
 **BERT Improvement over Best Classical ML**
 ![BERT Improvement](results/plots/bert_improvement.png)
+
+This chart isolates the BERT advantage and makes its direction very clear. Positive values on Twitter and Reddit show where contextual representations help; the negative value on C-SSRS shows where fine-tuning a large model on tiny data actually hurts. The pattern makes sense — BERT is most valuable when texts are long enough that individual word counts are not sufficient, and when there is enough data to fine-tune reliably.
 
 ---
 
@@ -287,17 +329,27 @@ Tier 1 (fine-tuned models, F1=0.98–0.99) → Tier 2 (zero-shot transfer, F1=0.
 **Russian VK — Fine-Tuned Models (mBERT vs XLM-R vs Classical ML)**
 ![Russian VK Fine-Tuned Models](results/plots/russian_vk_finetuned_models.png)
 
+When trained on Russian data, all models perform very well — the F1 scores are all above 0.97. The differences between mBERT, XLM-R, and SVM are tiny (less than 0.003). This tells us that the Russian VK dataset is highly separable — a well-tuned TF-IDF model captures almost all the signal that a multilingual transformer does. The transformer advantage only becomes meaningful when Russian training data is removed entirely.
+
 **All Models on Russian VK (Fine-tuned + Zero-shot)**
 ![Russian VK All Models with Zero-shot](results/plots/russian_vk_all_models_with_zeroshot.png)
+
+Adding the zero-shot results to the chart reveals a large gap — around 0.10–0.20 F1 points — between models trained on Russian and models transferred from English with no Russian data. What surprised me here is that mBERT (F1=0.877) outperforms XLM-R (F1=0.788) in zero-shot despite being a smaller and older model. The ordering reverses once Russian training data is available. This suggests the two models have different strengths depending on the scenario.
 
 **Zero-Shot vs Fine-Tuned — F1 Comparison and Precision/Recall Breakdown**
 ![Zero-Shot Cross-Lingual](results/plots/zero_shot_cross_lingual.png)
 
+This is one of the most important plots in the project. It shows not just the overall F1 gap between zero-shot and fine-tuned, but also the precision/recall breakdown. Zero-shot XLM-R has high precision (0.93) but low recall (0.64) for the depressive class — meaning it misses 36% of depressive posts. For a clinical tool, that is a serious problem. The fine-tuned model brings both precision and recall above 0.99. The precision/recall split in zero-shot is worth discussing in the thesis because it has direct implications for how this kind of model could be deployed.
+
 **English vs Russian — F1 by Model Family**
 ![English vs Russian Full](results/plots/english_vs_russian_full.png)
 
+This chart puts the English and Russian results side by side across model families. Fine-tuned Russian models actually score higher than most English results, which is not because Russian is easier — it reflects the higher lexical separability of the VK dataset. The zero-shot Russian bars are visibly lower than everything else, which makes the cost of not having Russian annotations clear.
+
 **Full Benchmark Heatmap — All Datasets × All Models**
 ![Full Benchmark Heatmap](results/plots/full_benchmark_heatmap_final.png)
+
+This is the summary view of the entire benchmark. A few things stand out: the C-SSRS column is consistently lighter than the others; the DL collapse on Twitter is visible as a dark row; and the zero-shot transfer cells for Russian are noticeably lower than the fine-tuned cells. The heatmap also confirms that there is no single winning model — the best performer changes depending on the dataset, which is one of the central conclusions of this project.
 
 ---
 
@@ -325,18 +377,28 @@ LIME (local, model-agnostic), SHAP (global, game-theoretic), and Attention (inte
 **SHAP — Top 20 Words: Twitter Suicidality Detection**
 ![SHAP Twitter](results/plots/shap_twitter_top_words.png)
 
+The Twitter SHAP plot shows a clean, clinically sensible set of top features — words like *suicide*, *kill*, *die*, and *forever* are the strongest predictors of the suicidal class. What is reassuring here is that there are no spurious features: no usernames, URLs, or formatting artifacts in the top 20. The model has genuinely learned to respond to psychological content. This kind of validation is important for any high-stakes application — a good F1 score alone does not prove the model is doing the right thing.
+
 **SHAP — Top 20 Words: Russian VK Depression Detection**  
 *(Red = predicts depressive, Blue = predicts non-depressive)*
 ![SHAP Russian VK](results/plots/shap_russian_vk_top_words.png)
 
+The Russian SHAP plot is more complicated, and honestly more interesting. The top depressive features include expected Russian vocabulary related to pain and loneliness, but also *Kazakhstan* and date-related terms like *April* and *2019*. These geographic and temporal features are scraping artifacts — they reflect when and where the data was collected, not the actual psychological content of posts. A model that has partially learned to recognise the collection geography instead of the psychological signal will likely underperform on data from different regions or time periods. This is an important limitation to discuss in the thesis.
+
 **LIME — Twitter SVM: Suicidal Post**
 ![LIME Twitter Suicidal](results/plots/lime_twitter_suicidal.png)
+
+This local explanation shows the model correctly using indirect language cues — phrases indicating emotional exhaustion and finality — as evidence of suicidality. The LIME weights are large and concentrated on meaningful words, which suggests the model has good confidence and is relying on genuine signals rather than noise.
 
 **LIME — Russian VK: Depressive vs Non-depressive Post**
 ![LIME Russian VK](results/plots/lime_russian_vk.png)
 
+The Russian LIME examples confirm that the model captures Cyrillic-language depressive vocabulary in a meaningful way. The features highlighted overlap with what clinical psychologists would consider markers of depression in Russian text. This cross-language consistency — finding similar signal types in both English and Russian — is one of the pieces of evidence that multilingual pre-training actually works at a semantic level.
+
 **XLM-RoBERTa Attention — Russian VK Posts**
 ![Attention XLM-R Russian](results/plots/attention_xlmr_russian.png)
+
+The attention visualisation shows which tokens XLM-R focuses on when classifying Russian posts. High-attention tokens tend to cluster around emotionally loaded words and self-referential phrases, consistent with what LIME and SHAP found. Having three independent methods — LIME (local, model-agnostic), SHAP (global, game-theoretic), and attention (internal to the transformer) — all point to the same features is strong evidence that the model has learned something real rather than found a statistical shortcut.
 
 ---
 
@@ -351,6 +413,8 @@ These simple baselines establish the learning margins that trained models must e
 | Majority class | 0.4873 | 0.3333 | 0.4379 | 0.3333 |
 | Keyword matching | 0.5364 | 0.6363 | 0.5123 | 0.5455 |
 
+The keyword baseline on Twitter achieves Precision=1.0 but Recall=0.06 — every flagged tweet is genuinely suicidal, but 94% of suicidal tweets use indirect language that a keyword list completely misses. This is probably the clearest demonstration in the project of why NLP models matter for this task: most at-risk language is not explicit.
+
 **Gap analysis — best ML F1 over best baseline:**
 
 | Dataset | Best ML | Best Baseline | Gap |
@@ -359,6 +423,8 @@ These simple baselines establish the learning margins that trained models must e
 | Reddit | LR 0.9411 | Keyword 0.6363 | **+0.30** |
 | C-SSRS | SVM 0.7270 | Keyword 0.5123 | **+0.21** |
 | Russian VK | SVM 0.9931 | Keyword 0.5455 | **+0.45** |
+
+The gap over the keyword baseline on Reddit (+0.30) measures how much value the model gains from learning contextual TF-IDF patterns beyond simple lexical matching. The smallest gap is on C-SSRS (+0.21), which reflects how difficult that dataset is — the model has not learned very much more than a simple keyword rule.
 
 ### Classical ML — F1 Score (weighted)
 
