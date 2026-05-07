@@ -464,6 +464,10 @@ ROC-AUC measures ranking quality independently of the classification threshold. 
 | mBERT (`bert-base-multilingual-cased`) | — | — | — | 0.9920 |
 | XLM-RoBERTa (`xlm-roberta-base`) | — | — | — | **0.9942** |
 
+> **Why the — values?**
+> - **BERT on Russian VK**: `bert-base-uncased` was trained only on English text. Its tokenizer has no Cyrillic characters — Russian input produces mostly `[UNK]` tokens. Running it on Russian would be meaningless, so it was not evaluated.
+> - **mBERT / XLM-R on English datasets**: These models were reserved for Russian and cross-lingual experiments. On English, they would just replicate BERT at a slight disadvantage — multilingual models trade some single-language performance for cross-lingual coverage, so there is nothing useful to compare.
+
 ### Zero-Shot Cross-Lingual Transfer
 
 | Experiment | Training data | Test data | F1 | Precision (dep.) | Recall (dep.) |
@@ -474,6 +478,10 @@ ROC-AUC measures ranking quality independently of the classification threshold. 
 | XLM-R zero-shot | English Reddit (20k) | Russian VK (12,808) | 0.7882 | 0.93 | 0.64 |
 | Random baseline | — | — | 0.50 | — | — |
 
+> **Why the — values?**
+> - **mBERT fine-tuned — precision/recall**: Per-class breakdown was not recorded for fine-tuned runs because at F1=0.9920 both precision and recall are near-perfect. The detail only matters for the zero-shot experiments, where the asymmetry is clinically significant.
+> - **Random baseline — training/test/precision/recall**: A random baseline predicts classes at random with no training data. Per-class precision and recall are not meaningful for a random predictor.
+
 ### Few-Shot Learning Curve — XLM-R on Russian VK
 
 | N (Russian examples) | F1 | Gap closed vs zero-shot |
@@ -483,6 +491,8 @@ ROC-AUC measures ranking quality independently of the classification threshold. 
 | 500 | 0.9725 | 90% |
 | 1,000 | 0.9841 | 92% |
 | ~51,000 (full) | 0.9942 | 100% |
+
+> **Why — for N=0 gap closed?** There is no gap to measure at the starting point — the zero-shot result is the baseline itself, so "% closed" is not defined for it.
 
 ---
 
