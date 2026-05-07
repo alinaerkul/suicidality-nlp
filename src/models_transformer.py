@@ -148,6 +148,7 @@ def run_bert_experiment(X_train, X_test, y_train, y_test,
                         model_name='bert',
                         epochs=None,
                         batch_size=None,
+                        eval_batch_size=None,
                         max_len=None,
                         lr=None):
     """
@@ -165,7 +166,9 @@ def run_bert_experiment(X_train, X_test, y_train, y_test,
         dataset_name    : 'twitter', 'reddit', или 'cssrs'
         model_name      : имя для сохранения результатов
         epochs          : количество эпох
-        batch_size      : размер батча
+        batch_size      : размер батча для обучения
+        eval_batch_size : размер батча для оценки (по умолчанию batch_size * 8 —
+                          без градиентов можно использовать гораздо больший батч)
         max_len         : максимальная длина токенов
         lr              : learning rate
 
@@ -191,9 +194,13 @@ def run_bert_experiment(X_train, X_test, y_train, y_test,
     train_dataset = BertDataset(X_train, y_train.tolist(), tokenizer, max_len)
     test_dataset  = BertDataset(X_test,  y_test.tolist(),  tokenizer, max_len)
 
+    # Eval can use a much larger batch — no gradients, so memory is not a constraint.
+    # Default to 8× training batch size; caller can override via eval_batch_size.
+    _eval_bs = eval_batch_size if eval_batch_size is not None else batch_size * 8
+
     train_loader = DataLoader(train_dataset, batch_size=batch_size,
                               shuffle=True,  num_workers=0)
-    test_loader  = DataLoader(test_dataset,  batch_size=batch_size,
+    test_loader  = DataLoader(test_dataset,  batch_size=_eval_bs,
                               shuffle=False, num_workers=0)
 
     # Optimizer — AdamW с weight decay для регуляризации

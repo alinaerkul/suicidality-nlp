@@ -1,0 +1,10 @@
+{
+  "dataset": "few_shot_ru_100",
+  "model": "xlmr_few_shot",
+  "accuracy": 0.9636,
+  "precision": 0.9636,
+  "recall": 0.9636,
+  "f1": 0.9636,
+  "f1_macro": 0.9636,
+  "roc_auc": null
+}

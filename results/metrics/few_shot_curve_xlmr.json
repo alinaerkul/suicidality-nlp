@@ -1,0 +1,18 @@
+{
+  "experiment": "few_shot_curve_xlmr",
+  "model": "xlm-roberta-base",
+  "test_set": "Russian VK (20% stratified hold-out, random_state=42)",
+  "curve": {
+    "0": 0.7882,
+    "100": 0.9636,
+    "500": 0.9725,
+    "1000": 0.9841,
+    "51231": 0.9942
+  },
+  "notes": {
+    "n_0": "XLM-R fine-tuned on English Reddit (zero-shot transfer)",
+    "n_few": "XLM-R fine-tuned on N Russian examples (stratified sample, random_state=42)",
+    "n_all": "XLM-R fine-tuned on full Russian training set (~51k rows)",
+    "status": "PARTIAL \u2014 N=5000 not yet computed; run: python scripts/few_shot_curve.py --skip_existing"
+  }
+}
