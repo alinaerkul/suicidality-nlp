@@ -228,6 +228,8 @@ Attention-based explanations offer an architecture-internal perspective \citep{c
 
 Four datasets are used in this study, spanning two languages, three social media platforms, and both binary and multi-class label schemes. Table~\ref{tab:datasets} provides an overview.
 
+The four datasets were chosen to cover the full difficulty spectrum rather than to maximise average performance. Reddit (232k posts, balanced) and Russian VK (64k posts, balanced) are well-resourced datasets where all model families perform well. Twitter (1,785 posts) and C-SSRS (500 posts) are deliberately included as stress tests: Twitter exposes the minimum data threshold for recurrent networks, and C-SSRS provides the only clinically-annotated labels in the benchmark. Without the two small datasets, every model would score above 0.93 and it would be impossible to distinguish where each model family starts to fail.
+
 \begin{table}[H]
 \centering
 \caption{Dataset overview. All datasets are split 80/20 stratified by label using \texttt{random\_state=42}.}
@@ -248,13 +250,17 @@ Mendeley VK Depressive & Russian & 64,039 & 2 & Binary & Mendeley \\
 
 The Twitter dataset contains 1,785 tweets labelled as either \textit{suicidal} (36.7\%) or \textit{non-suicidal} (63.3\%). Tweets were collected from public accounts and manually annotated. This is the smallest and most imbalanced dataset in the benchmark, with a median text length of approximately 85 characters.
 
+The primary role of this dataset in the benchmark is as a \textbf{small-data stress test}. With only 1,428 training examples, it exposes the minimum viable data threshold for different model families — LSTM and GRU collapse entirely (F1$\approx$0.49), while pre-trained BERT achieves F1=0.9468 on the same data. This contrast is one of the clearest empirical demonstrations of what pre-training provides.
+
 \section{Reddit Suicide Watch Dataset}
 
 The Reddit Binary dataset contains 232,074 posts from the r/SuicideWatch and r/teenagers subreddits, labelled as \textit{suicide} or \textit{non-suicide}. The dataset is perfectly balanced (50/50). Due to computational constraints, a stratified subsample of 20,000 posts is used for transformer training.
 
 \section{Reddit C-SSRS Dataset}
 
-The C-SSRS dataset contains 500 Reddit posts annotated using the Columbia Suicide Severity Rating Scale (C-SSRS), a validated clinical instrument. The original five-class scheme (Supportive, Ideation, Behaviour, Attempt, Indicator) is collapsed into a binary classification: \textit{suicidal} (classes 2–5) versus \textit{non-suicidal} (class 1), yielding a severe class imbalance with the minority class representing approximately 9\% of posts.
+The C-SSRS dataset contains 500 Reddit posts annotated using the Columbia Suicide Severity Rating Scale (C-SSRS), a validated clinical instrument. The original five-class scheme (Supportive, Ideation, Behaviour, Attempt, Indicator) is collapsed into a binary classification: \textit{suicidal} (classes 2--5) versus \textit{non-suicidal} (class 1), yielding a severe class imbalance with the minority class representing approximately 9\% of posts.
+
+This is the only dataset in the benchmark with \textbf{clinical annotation}. All other datasets use labels derived from subreddit membership or crowd annotation; C-SSRS labels were assigned according to a validated psychiatric instrument used in real clinical practice \citep{gaur2019knowledge}. It represents the closest available proxy for real deployment conditions, and its extreme scarcity (400 training examples) makes it the hardest dataset in the benchmark. The result that SVM outperforms BERT on C-SSRS (F1=0.727 vs 0.710) is only visible because this dataset is included.
 
 \section{Mendeley VK Depressive Posts Dataset}
 
