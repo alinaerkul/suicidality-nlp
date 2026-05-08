@@ -165,17 +165,16 @@ This thesis addresses the problem of automated suicidality and depression detect
 
 \section{Research Questions}
 
-This thesis is structured around seven research questions:
+This thesis is structured around four research questions:
 
 \begin{enumerate}[label=\textbf{RQ\arabic*.}]
-    \item How do classical ML models (Logistic Regression, SVM, Random Forest) perform on binary suicidality detection across the Twitter, Reddit, and C-SSRS datasets?
-    \item How do deep learning models (LSTM, BiLSTM, GRU) compare with classical ML under identical evaluation conditions?
-    \item How does fine-tuned BERT compare with classical ML and deep learning across English datasets?
-    \item How much do results depend on dataset characteristics such as size, text length, and label complexity?
-    \item Can multilingual transformers (mBERT, XLM-RoBERTa) effectively detect depression in Russian-language social media posts?
-    \item How well does zero-shot cross-lingual transfer work when trained only on English data and tested on Russian?
-    \item What do explainability methods (LIME, SHAP, attention) reveal about model behaviour in both languages, and what artifacts do they expose?
+    \item How do classical ML, deep learning, and transformer models compare on English suicidality and depression detection, and how much do results depend on dataset characteristics such as size, text length, and annotation quality?
+    \item Can multilingual transformers (mBERT, XLM-RoBERTa) effectively detect depression in Russian-language social media when fine-tuned on Russian data?
+    \item How well does zero-shot cross-lingual transfer work when a model is trained only on English and evaluated on Russian — and how many Russian-language examples are needed to close the performance gap?
+    \item What do explainability methods (LIME, SHAP, and attention visualisation) reveal about what models actually learn, and what artifacts do they expose that evaluation metrics alone cannot detect?
 \end{enumerate}
+
+RQ1 covers the English-language benchmark (Chapters~\ref{ch:ml}--\ref{ch:bert}). RQ2 and RQ3 address the multilingual contribution — fine-tuned performance and zero-shot cross-lingual transfer respectively — both covered in Chapter~\ref{ch:multilingual}. RQ4 covers the explainability analysis in Chapter~\ref{ch:xai}.
 
 \section{Novel Contributions}
 
@@ -825,26 +824,17 @@ LIME, SHAP, and attention all identify the same semantic clusters — emotional 
 
 \section{Answers to Research Questions}
 
-\paragraph{RQ1 — Classical ML performance.}
-Classical ML models achieve competitive F1 scores across all English datasets (0.648--0.941). SVM is the most consistent model, achieving the best or second-best F1 on every dataset and consistently minimising false negatives. No single model dominates all datasets.
+\paragraph{RQ1 — English benchmark performance and dataset dependency.}
+All three model families achieve competitive performance on English datasets, but results vary substantially with dataset characteristics rather than model choice. BERT achieves the highest overall English F1 (Twitter: 0.9468, Reddit: 0.9653) and rescues the small-data failure of LSTM/GRU. However, SVM outperforms BERT on C-SSRS (F1=0.727 vs 0.710), where only 400 training examples are available — pre-training alone cannot overcome extreme data scarcity. The 40$\times$ range in text length and the 460$\times$ range in dataset size have larger effects on F1 than the choice of model family. Deep learning only outperforms classical ML on Reddit, the largest dataset; on Twitter, LSTM and GRU collapse entirely (F1$\approx$0.49).
 
-\paragraph{RQ2 — Deep learning vs classical ML.}
-Deep learning only outperforms classical ML on Reddit, the largest dataset. On Twitter (1,785 samples), LSTM and GRU completely collapse; on C-SSRS (500 samples), all DL models underperform. TF-IDF with balanced class weights is a stronger baseline than commonly assumed when training data is limited.
+\paragraph{RQ2 — Multilingual transformers for Russian.}
+mBERT (F1=0.9920) and XLM-R (F1=0.9942) achieve near-perfect performance on Russian VK when fine-tuned on Russian data, confirming that multilingual pre-training transfers effectively to Russian depression detection. Notably, LinearSVC (F1=0.9948) marginally outperforms both transformers on this dataset, suggesting strong lexical separability that TF-IDF can exploit without the overhead of multilingual fine-tuning.
 
-\paragraph{RQ3 — BERT vs classical ML and DL.}
-BERT achieves the best overall English performance and rescues the small-data failure of LSTM/GRU on Twitter. However, SVM marginally outperforms BERT on C-SSRS — pre-training alone cannot overcome extreme data scarcity (400 training examples for 110M parameters).
+\paragraph{RQ3 — Zero-shot cross-lingual transfer and few-shot efficiency.}
+Both zero-shot models substantially exceed the random baseline. mBERT (F1=0.877) outperforms XLM-R (F1=0.788) despite being the smaller, older model — explained by vocabulary overlap between mBERT's shared WordPiece subwords and Russian Cyrillic. The precision/recall profiles differ in clinically important ways: XLM-R has high precision but low recall (0.64), while mBERT has lower precision but high recall (0.94), making mBERT more appropriate for screening use cases where missing cases is the greater risk. The few-shot curve shows that 100 Russian examples close 84\% of the gap to fully supervised performance, making Russian annotation effort extremely cost-efficient.
 
-\paragraph{RQ4 — Dataset dependency.}
-Dataset characteristics explain more variance in results than model choice. The 40$\times$ range in text length, the 460$\times$ range in dataset size, and the severity of class imbalance all have larger effects on F1 than the choice of model family.
-
-\paragraph{RQ5 — Multilingual transformers for Russian.}
-mBERT (0.9920) and XLM-R (0.9942) achieve near-perfect F1 on Russian VK when fine-tuned on Russian data, confirming that multilingual pre-training transfers effectively to Russian depression detection.
-
-\paragraph{RQ6 — Zero-shot cross-lingual transfer.}
-Both zero-shot models exceed the random baseline substantially. mBERT (F1=0.877) outperforms XLM-R (F1=0.788) despite being the smaller, older model — a result explained by vocabulary overlap between mBERT's shared WordPiece representation and Russian Cyrillic. The precision/recall profiles differ importantly: XLM-R has high precision but low recall (0.64), while mBERT has lower precision but high recall (0.94). For a clinical screening setting, mBERT's error profile is more appropriate. The few-shot curve further shows that 100 Russian examples close 84\% of the gap to fully supervised performance, making annotation effort extremely cost-efficient.
-
-\paragraph{RQ7 — Explainability findings.}
-LIME and SHAP confirm that English and Russian models learn clinically and linguistically valid features. Critically, SHAP revealed a preprocessing bug and two dataset artifacts that were invisible from evaluation metrics, demonstrating that XAI methods provide diagnostic value beyond performance validation.
+\paragraph{RQ4 — Explainability findings.}
+LIME and SHAP confirm that English and Russian models learn clinically and linguistically valid features. Critically, SHAP revealed a preprocessing bug (English vocabulary leaking into Russian TF-IDF features) and two dataset scraping artifacts (geographic and temporal bias) that were completely invisible from F1 scores. This demonstrates that explainability methods provide diagnostic value beyond performance validation — a finding with direct implications for any high-stakes NLP deployment.
 
 \section{Limitations}
 

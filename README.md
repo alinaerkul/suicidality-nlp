@@ -47,15 +47,14 @@ A reproducible, cross-lingual NLP benchmark for detecting suicidality and depres
 
 ## Research Questions
 
-| RQ | Question |
-|----|----------|
-| RQ1 | How do classical ML models (LR, SVM, RF) perform on binary suicidality detection across Twitter, Reddit, and C-SSRS? |
-| RQ2 | How do deep learning models (LSTM, BiLSTM, GRU) compare with classical ML? |
-| RQ3 | How does BERT compare with classical ML and DL across English datasets? |
-| RQ4 | How much do results depend on dataset characteristics (size, text length, domain)? |
-| RQ5 | Can multilingual transformers (mBERT, XLM-RoBERTa) effectively detect depression in Russian? |
-| RQ6 | How well does zero-shot cross-lingual transfer work — and what is the cost of having no Russian training data? |
-| RQ7 | What do explainability methods (LIME, SHAP, attention) reveal about model behaviour across languages? |
+| RQ | Question | Chapters |
+|----|----------|----------|
+| RQ1 | How do classical ML, deep learning, and transformer models compare on English suicidality detection, and how much do results depend on dataset characteristics (size, text length, annotation quality)? | 5, 6, 7 |
+| RQ2 | Can multilingual transformers (mBERT, XLM-RoBERTa) effectively detect depression in Russian-language social media when fine-tuned on Russian data? | 8 |
+| RQ3 | How well does zero-shot cross-lingual transfer work when trained only on English and tested on Russian — and how many Russian examples are needed to close the performance gap? | 8 |
+| RQ4 | What do explainability methods (LIME, SHAP, attention) reveal about what models actually learn, and what artifacts do they expose that evaluation metrics cannot detect? | 9 |
+
+> **Note on structure:** RQ1 consolidates the English benchmark (previously split across 4 questions). RQ3 is the primary novel contribution of the thesis. The four RQs map directly to the four results chapters.
 
 ---
 
