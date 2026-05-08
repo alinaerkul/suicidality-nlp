@@ -448,15 +448,26 @@ ROC-AUC measures ranking quality independently of the classification threshold. 
 
 ### Deep Learning — F1 Score (weighted)
 
-| Model | Twitter (EN) | Reddit (EN) | C-SSRS (EN) |
-|-------|:-----------:|:----------:|:----------:|
-| LSTM | 0.49 * | 0.9364 | 0.3988 |
-| BiLSTM | **0.8607** | **0.9425** | 0.5487 |
-| GRU | 0.49 * | 0.9415 | **0.5739** |
+| Model | Twitter (EN) | Reddit (EN) | C-SSRS (EN) | Russian VK (RU) |
+|-------|:-----------:|:----------:|:----------:|:--------------:|
+| LSTM | 0.49 * | 0.9364 | 0.3988 | — |
+| BiLSTM | **0.8607** | **0.9425** | 0.5487 | — |
+| GRU | 0.49 * | 0.9415 | **0.5739** | — |
 
 > \* Model collapsed — predicts majority class only. Too few training samples (1,428).
 
+> **Why Deep Learning = — on Russian VK?**
+> These models use **GloVe embeddings** — pre-trained word vectors built from English text only. Russian words do not exist in the GloVe vocabulary, so every Russian token maps to a zero or random vector and the model has nothing meaningful to learn from. To run DL models on Russian you would need Russian word embeddings (e.g. fastText Russian), which was outside the scope of this project. Deep learning was kept English-only.
+
 ### Transformers — F1 Score (weighted)
+
+The three transformer models differ fundamentally in what languages they were trained on. This determines where it makes sense to evaluate them:
+
+| Model | Trained on | Knows Russian? | Best used for |
+|-------|-----------|:--------------:|---------------|
+| BERT (`bert-base-uncased`) | English only (Wikipedia + BookCorpus) | ❌ No Cyrillic in vocabulary | English tasks |
+| mBERT (`bert-base-multilingual-cased`) | Wikipedia in 104 languages incl. Russian | ✅ Yes | Multilingual + cross-lingual transfer |
+| XLM-RoBERTa (`xlm-roberta-base`) | 100 languages, 2.5TB Common Crawl | ✅ Yes | Multilingual + cross-lingual transfer |
 
 | Model | Twitter (EN) | Reddit (EN) | C-SSRS (EN) | Russian VK (RU) |
 |-------|:-----------:|:----------:|:----------:|:--------------:|
@@ -464,9 +475,9 @@ ROC-AUC measures ranking quality independently of the classification threshold. 
 | mBERT (`bert-base-multilingual-cased`) | — | — | — | 0.9920 |
 | XLM-RoBERTa (`xlm-roberta-base`) | — | — | — | **0.9942** |
 
-> **Why the — values?**
-> - **BERT on Russian VK**: `bert-base-uncased` was trained only on English text. Its tokenizer has no Cyrillic characters — Russian input produces mostly `[UNK]` tokens. Running it on Russian would be meaningless, so it was not evaluated.
-> - **mBERT / XLM-R on English datasets**: These models were reserved for Russian and cross-lingual experiments. On English, they would just replicate BERT at a slight disadvantage — multilingual models trade some single-language performance for cross-lingual coverage, so there is nothing useful to compare.
+> **BERT = — on Russian VK:** `bert-base-uncased` has no Cyrillic characters in its vocabulary. Russian text gets tokenised almost entirely as `[UNK]` tokens — it physically cannot read Russian. Not a design choice, a hard technical limitation.
+>
+> **mBERT and XLM-R = — on English datasets:** Both models understand English — they *could* run on Twitter/Reddit/C-SSRS. But they would produce slightly worse results than monolingual BERT because their capacity is shared across 100+ languages. The interesting contribution of multilingual models is specifically how they handle Russian and cross-lingual transfer, so that is the only place they were evaluated.
 
 ### Zero-Shot Cross-Lingual Transfer
 
