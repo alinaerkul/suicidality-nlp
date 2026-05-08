@@ -32,5 +32,8 @@ CHEATSHEET.html
 SUPERVISOR_REPORT.md
 SUPERVISOR_REPORT.html
 
+# Thesis (LaTeX source kept locally and in Overleaf only)
+thesis/
+
 # IDE
 .idea/

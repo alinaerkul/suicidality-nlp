@@ -80,21 +80,27 @@ The table below lists the papers most closely related to this project — either
 | Narynov et al. (2020) | Data in Brief | **Russian VK dataset source** — must cite | VK 64k posts | No F1 reported (data paper) |
 | Gaur et al. (2019) | WWW 2019 | **C-SSRS dataset source** — must cite | C-SSRS 500 users | CNN > SVM (+4.2% recall, 5-class) |
 | Gaur et al. (2021) | PLOS ONE | Temporal C-SSRS analysis | C-SSRS 448 users | AUC 0.78 (LSTM+CNN, 5-class) |
+| **Abdulsalam & Alhothali (2022)** | Applied Sciences | **Review of 60+ ML methods** — benchmark gaps motivating this work | Literature survey | — (review) |
 | Ji et al. (2022) | LREC 2022 | MentalBERT — domain-adapted BERT | UMD Reddit / Twitter | F1 58.26 suicide / F1 89.01 Twitter |
+| **Chim et al. (2024)** | CLPsych 2024 | **CLPsych shared task** — evidence of suicidality in online posts using LLMs | Reddit (CLPsych) | Top system F1 ~0.62 (multiclass) |
 | Yang et al. (2024) | WWW 2024 | MentaLLaMA — LLMs vs fine-tuned (10 datasets) | Reddit / Twitter multi-task | MentalRoBERTa F1 95.11 (Depression_Reddit) |
+| **Kermani et al. (2025)** | arXiv 2025 | **Fine-tuning vs prompting vs RAG** — explains why fine-tuning wins | Mental health social media | Fine-tuning > prompting on classification |
 | Haque et al. (2021) | ECML 2021 | Label noise in Reddit subreddit labels | Reddit 1.9k | F1 73.61 (GUSE+Dense) |
 | Yeskuatov et al. (2022) | IJERPH | Review: 21 models on Reddit datasets | Multiple Reddit | XGBoost F1 0.957 (7k binary) |
 | **Raihan et al. (2025)** ⭐ | arXiv 2025 | **LLMs on same Russian VK dataset** | **VK 32k (Narynov)** | **GPT-4 F1 0.87 (zero-shot CoT)** |
 | Aguirre et al. (2024) | COLING 2025 | Multilingual model (6 European languages) | Spanish tweets (translated) | mT5 F1 88.1 (with train data in all languages) |
 | Bucur et al. (2025) | arXiv 2025 | Survey: 108 multilingual mental health datasets | 24 languages | — (survey) |
-| Nguyen & Pham (2024) | arXiv 2024 | LLM ensemble, limited labels | Reddit 4-class (500) | Ensemble F1 0.811 |
-| Pokrywka et al. (2024) | arXiv 2024 | DeBERTa/GPT-4 multiclass suicide | Reddit 4-class (500) | GPT-4o fine-tuned wF1 74.8 |
+| **Pokrywka et al. (2024)** | arXiv 2024 | Transformer benchmark on suicide detection | Reddit 4-class (500) | GPT-4o fine-tuned wF1 74.8 |
 
-**Key differentiators of this project vs. all listed papers:**
-- Only project providing both fine-tuned transformer benchmarks **and** true zero-shot EN→RU transfer on the Narynov Russian VK dataset
-- Raihan et al. (2025) ⭐ use the same Russian VK dataset — GPT-4 zero-shot CoT gets F1=0.87; our fine-tuned XLM-R achieves F1=0.9942, showing fine-tuning beats LLM prompting; our XLM-R zero-shot (0.7882) is comparable to smaller open-source LLMs (DeepSeek R1-14B: 0.79)
-- Aguirre et al. (2024) is the closest multilingual comparison — but they use translated training data for each target language; our zero-shot setup (train on English only, test on Russian) is strictly harder
-- Bucur et al. (2025) survey confirms Russian is an under-represented language in mental health NLP — this project directly fills that gap
+**What these papers mean for this project:**
+
+- **Abdulsalam & Alhothali (2022)** reviewed 60+ papers on ML for suicidal ideation detection and noted the lack of cross-lingual and cross-platform benchmarks — this thesis directly addresses those gaps with 4 datasets, 9 models, and a zero-shot Russian experiment.
+- **Chim et al. (2024)** ran the CLPsych 2024 shared task asking LLMs to find evidence of suicidality in Reddit posts. The best system used GPT-4 with prompting strategies. Our work provides a complementary fine-tuned encoder baseline showing that for binary classification, smaller models match LLM-level performance at a fraction of the cost.
+- **Pokrywka et al. (2024)** evaluated DeBERTa and GPT-4 on multi-class suicide risk (C-SSRS Reddit), reporting GPT-4o fine-tuned at wF1=74.8. Our binary SVM achieves 72.7 on the same dataset with a much simpler pipeline — showing that the difficulty is in the data, not the model choice.
+- **Kermani et al. (2025)** directly compare fine-tuning, prompt engineering, and RAG for mental health text. Their conclusion — fine-tuning is most effective for classification tasks — explains why our fine-tuned XLM-R (F1=0.994) beats GPT-4 zero-shot CoT (F1=0.87) on Russian VK.
+- **Raihan et al. (2025)** ⭐ use the same Russian VK dataset — GPT-4 zero-shot CoT gets F1=0.87; our fine-tuned XLM-R achieves F1=0.9942; our XLM-R zero-shot (0.7882) is comparable to smaller open-source LLMs (DeepSeek R1-14B: 0.79)
+- **Aguirre et al. (2024)** is the closest multilingual comparison — but they use translated training data for each target language; our zero-shot setup (train on English only, test on Russian) is strictly harder
+- **Bucur et al. (2025)** survey confirms Russian is an under-represented language in mental health NLP — this project directly fills that gap
 
 ---
 
