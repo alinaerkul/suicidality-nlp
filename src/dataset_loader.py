@@ -195,10 +195,11 @@ def apply_binary_mapping(df: pd.DataFrame, dataset_name: str) -> pd.DataFrame:
         raise ValueError(f"Unknown dataset_name: '{dataset_name}'. "
                          f"Expected one of: twitter, reddit_binary, cssrs, russian_vk")
 
-    # Sanity check — make sure no labels were missed
+    # Sanity check — drop rows with unrecognised labels
     missing = df["binary_label"].isna().sum()
     if missing > 0:
-        print(f"WARNING: {missing} rows have unrecognised labels and got NaN binary_label.")
+        print(f"WARNING: {missing} rows had unrecognised labels and were dropped.")
+        df = df.dropna(subset=["binary_label"]).reset_index(drop=True)
 
     return df
 
